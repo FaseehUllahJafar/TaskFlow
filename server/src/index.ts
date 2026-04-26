@@ -1,54 +1,64 @@
-import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
+import { env } from './config/env';
 import app from './app';
-import { connectRedis } from './config/redis';
+import { pool } from './config/db';
+import redisClient, { connectRedis } from './config/redis';
 import { initializeSocket } from './socket';
 import logger from './utils/logger';
 
-dotenv.config();
-
-const PORT = process.env.PORT || 5000;
-
-// Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.io
 const io = new Server(server, {
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+        origin: env.CORS_ORIGIN.split(','),
         credentials: true,
     },
 });
 
-// Initialize Socket.io handlers
 initializeSocket(io);
 
-// Start server
 const startServer = async () => {
     try {
-        // Connect to Redis
         await connectRedis();
 
-        server.listen(PORT, () => {
-            logger.info(`Server running on port ${PORT}`);
-            logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        server.listen(env.PORT, () => {
+            logger.info(`Server running on port ${env.PORT}`);
+            logger.info(`Environment: ${env.NODE_ENV}`);
         });
     } catch (error) {
-        logger.error('Failed to start server:', error);
+        logger.error('Failed to start server', error);
         process.exit(1);
     }
 };
 
-startServer();
+void startServer();
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    logger.info('SIGTERM received. Closing HTTP server...');
-    server.close(() => {
-        logger.info('HTTP server closed');
-        process.exit(0);
+let shuttingDown = false;
+
+const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info(`${signal} received, shutting down`);
+
+    // Hard stop if connections refuse to drain.
+    setTimeout(() => process.exit(1), 10_000).unref();
+
+    io.close(() => {
+        server.close(async () => {
+            try {
+                await pool.end();
+                if (redisClient.isOpen) await redisClient.quit();
+            } catch (error) {
+                logger.error('Error during shutdown', error);
+            }
+            process.exit(0);
+        });
     });
-});
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => logger.error('Unhandled rejection', reason));
 
 export { io };

@@ -19,6 +19,20 @@ import {
 const router = Router();
 
 // All routes require authentication (except client portal)
+// Client portal routes (no authentication required)
+router.get(
+    '/portal/:clientToken',
+    param('clientToken').isLength({ min: 32, max: 32 }),
+    validate,
+    asyncHandler(async (req, res) => {
+        const project = await getProjectByClientToken(req.params.clientToken);
+        res.status(200).json({
+            success: true,
+            data: project,
+        });
+    })
+);
+
 router.use(authenticate);
 
 // Get projects in workspace
@@ -137,20 +151,6 @@ router.delete(
         res.status(200).json({
             success: true,
             message: 'Client link deleted successfully',
-        });
-    })
-);
-
-// Client portal routes (no authentication required)
-router.get(
-    '/portal/:clientToken',
-    param('clientToken').isLength({ min: 32, max: 32 }),
-    validate,
-    asyncHandler(async (req, res) => {
-        const project = await getProjectByClientToken(req.params.clientToken);
-        res.status(200).json({
-            success: true,
-            data: project,
         });
     })
 );
