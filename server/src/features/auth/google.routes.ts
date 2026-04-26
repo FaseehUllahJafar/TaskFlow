@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import passport from 'passport';
-import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { users } from '../../db/schema';
@@ -9,8 +8,6 @@ import { asyncHandler } from '../../middleware/asyncHandler';
 import AppError from '../../utils/AppError';
 
 const router = Router();
-
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 
 router.get(
     '/google',
@@ -80,7 +77,7 @@ router.get(
         });
 
         // Redirect to frontend with access token
-        res.redirect(`${process.env.FRONTEND_URL}/auth/callback?accessToken=${tokens.accessToken}`);
+        res.redirect(`${process.env.FRONTEND_URL}/auth/callback#access_token=${tokens.accessToken}`);
     })
 );
 

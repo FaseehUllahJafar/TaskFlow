@@ -38,10 +38,21 @@ router.post(
     validate,
     asyncHandler(async (req, res) => {
         const result = await register(req.body);
+
+        res.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         res.status(201).json({
             success: true,
             message: 'Registration successful. Please check your email for verification.',
-            data: result,
+            data: {
+                user: result.user,
+                accessToken: result.accessToken,
+            },
         });
     })
 );

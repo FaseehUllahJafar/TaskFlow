@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { users, refreshTokens, workspaceMembers, workspaces } from '../../db/schema';
 import AppError from '../../utils/AppError';
@@ -172,7 +172,7 @@ export const resetPassword = async (token: string, data: ResetPasswordInput) => 
     const user = await db.query.users.findFirst({
         where: and(
             eq(users.resetToken, resetTokenHash),
-            eq(users.resetTokenExpires, new Date(Date.now())),
+            gt(users.resetTokenExpires, new Date()),
         ),
     });
 
