@@ -1,4 +1,4 @@
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, desc, inArray, SQL } from 'drizzle-orm';
 import { db } from '../../config/db';
 import {
     tasks,
@@ -10,6 +10,7 @@ import {
     activityLogs,
 } from '../../db/schema';
 import AppError from '../../utils/AppError';
+import { getProjectMembership } from '../../utils/membership';
 
 export const createTask = async (
     columnId: string,
@@ -18,7 +19,7 @@ export const createTask = async (
         title: string;
         description?: string;
         priority?: 'none' | 'low' | 'medium' | 'high' | 'urgent';
-        dueDate?: Date;
+        dueDate?: Date | string;
         assigneeIds?: string[];
         labelIds?: string[];
     }
@@ -67,7 +68,7 @@ export const createTask = async (
             title: data.title,
             description: data.description,
             priority: data.priority || 'none',
-            dueDate: data.dueDate,
+            dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
             position: newPosition,
             createdBy: userId,
         })
@@ -136,18 +137,28 @@ export const getTasks = async (
     }
 
     // Build where conditions
-    let whereConditions = [eq(tasks.projectId, projectId)];
+    const whereConditions: SQL[] = [eq(tasks.projectId, projectId)];
 
     if (filters?.assigneeId) {
-        whereConditions.push(eq(taskAssignees.userId, filters.assigneeId));
+        whereConditions.push(
+            inArray(
+                tasks.id,
+                db.select({ id: taskAssignees.taskId }).from(taskAssignees).where(eq(taskAssignees.userId, filters.assigneeId))
+            )
+        );
     }
 
     if (filters?.labelId) {
-        whereConditions.push(eq(taskLabels.labelId, filters.labelId));
+        whereConditions.push(
+            inArray(
+                tasks.id,
+                db.select({ id: taskLabels.taskId }).from(taskLabels).where(eq(taskLabels.labelId, filters.labelId))
+            )
+        );
     }
 
     if (filters?.priority) {
-        whereConditions.push(eq(tasks.priority, filters.priority));
+        whereConditions.push(eq(tasks.priority, filters.priority as (typeof tasks.priority.enumValues)[number]));
     }
 
     if (filters?.search) {
@@ -240,9 +251,9 @@ export const updateTask = async (
     data: {
         title?: string;
         description?: string;
-        priority?: string;
-        dueDate?: Date | null;
-        completedAt?: Date | null;
+        priority?: 'none' | 'low' | 'medium' | 'high' | 'urgent';
+        dueDate?: Date | string | null;
+        completedAt?: Date | string | null;
         coverImageUrl?: string | null;
     }
 ) => {
@@ -278,9 +289,17 @@ export const updateTask = async (
         throw new AppError('You do not have permission to update tasks', 403);
     }
 
+    const { dueDate, completedAt, ...fields } = data;
+    const updates = {
+        ...fields,
+        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
+        ...(completedAt !== undefined && { completedAt: completedAt ? new Date(completedAt) : null }),
+        updatedAt: new Date(),
+    };
+
     const [updatedTask] = await db
         .update(tasks)
-        .set(data)
+        .set(updates)
         .where(eq(tasks.id, taskId))
         .returning();
 
@@ -354,12 +373,7 @@ export const moveTask = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to move tasks', 403);
@@ -400,12 +414,7 @@ export const reorderTasks = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, column.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(column.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to reorder tasks', 403);
@@ -434,12 +443,7 @@ export const addAssignees = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to assign tasks', 403);
@@ -477,12 +481,7 @@ export const removeAssignee = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to remove assignees', 403);
@@ -518,12 +517,7 @@ export const addLabels = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to add labels', 403);
@@ -551,12 +545,7 @@ export const removeLabel = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to remove labels', 403);

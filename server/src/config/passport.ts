@@ -21,12 +21,16 @@ if (googleAuthEnabled) {
       async (accessToken, refreshToken, profile, done) => {
         try {
           // User lookup and creation will be handled in auth service
+          const email = profile.emails?.[0]?.value;
+          if (!email) {
+            return done(new Error('Google account has no email address'));
+          }
           return done(null, {
             googleId: profile.id,
-            email: profile.emails?.[0]?.value,
+            email,
             fullName: profile.displayName,
             avatarUrl: profile.photos?.[0]?.value,
-          });
+          } as unknown as Express.User);
         } catch (error) {
           return done(error as Error);
         }

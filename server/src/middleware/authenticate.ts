@@ -2,15 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import AppError from '../utils/AppError';
 
-export interface AuthRequest extends Request {
-    user?: {
-        id: string;
-        email: string;
-        role?: string;
-    };
+declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
+    namespace Express {
+        // passport already declares Request.user as Express.User; describe our JWT payload on it.
+        interface User {
+            id: string;
+            email: string;
+            role?: string;
+        }
+    }
 }
 
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export type AuthRequest = Request;
+
+export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers.authorization;
 

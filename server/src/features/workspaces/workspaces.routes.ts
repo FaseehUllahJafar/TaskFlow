@@ -86,7 +86,7 @@ router.get(
 router.patch(
     '/:id',
     body('name').optional().trim().isLength({ min: 2 }),
-    body('logoUrl').optional().isURL().or().isNull(),
+    body('logoUrl').optional({ nullable: true }).isURL(),
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const workspace = await updateWorkspace(req.params.id, req.user!.id, req.body);

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { attachments, tasks, workspaceMembers } from '../../db/schema';
 import AppError from '../../utils/AppError';
+import { getProjectMembership } from '../../utils/membership';
 
 export const uploadAttachment = async (
     taskId: string,
@@ -17,9 +18,7 @@ export const uploadAttachment = async (
     }
 
     // Check if user is a member
-    const member = await db.query.workspaceMembers.findFirst({
-        where: eq(workspaceMembers.workspaceId, task.projectId),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member || member.role === 'client') {
         throw new AppError('You do not have permission to upload attachments', 403);
@@ -51,9 +50,7 @@ export const getAttachments = async (taskId: string, userId: string) => {
     }
 
     // Check if user has access
-    const member = await db.query.workspaceMembers.findFirst({
-        where: eq(workspaceMembers.workspaceId, task.projectId),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member) {
         throw new AppError('You do not have access to this task', 403);

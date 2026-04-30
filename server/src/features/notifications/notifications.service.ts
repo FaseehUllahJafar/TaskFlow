@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { notifications, users } from '../../db/schema';
 import AppError from '../../utils/AppError';
@@ -21,7 +21,7 @@ export const getUserNotifications = async (userId: string, filters?: { isRead?: 
 
 export const getUnreadCount = async (userId: string) => {
     const result = await db
-        .select({ count: db.$count() })
+        .select({ count: sql<number>`count(*)::int` })
         .from(notifications)
         .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
 

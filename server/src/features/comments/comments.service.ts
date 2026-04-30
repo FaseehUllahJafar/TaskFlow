@@ -1,7 +1,8 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { comments, tasks, workspaceMembers, activityLogs } from '../../db/schema';
 import AppError from '../../utils/AppError';
+import { getProjectMembership } from '../../utils/membership';
 
 export const createComment = async (
     taskId: string,
@@ -17,12 +18,7 @@ export const createComment = async (
     }
 
     // Check if user is a member (clients can comment too)
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member) {
         throw new AppError('You do not have permission to comment', 403);
@@ -71,12 +67,7 @@ export const getComments = async (taskId: string, userId: string) => {
     }
 
     // Check if user has access
-    const member = await db.query.workspaceMembers.findFirst({
-        where: and(
-            eq(workspaceMembers.workspaceId, task.projectId),
-            eq(workspaceMembers.userId, userId)
-        ),
-    });
+    const member = await getProjectMembership(task.projectId, userId);
 
     if (!member) {
         throw new AppError('You do not have access to this task', 403);
@@ -85,7 +76,7 @@ export const getComments = async (taskId: string, userId: string) => {
     const commentsList = await db.query.comments.findMany({
         where: and(
             eq(comments.taskId, taskId),
-            eq(comments.parentId, null)
+            isNull(comments.parentId)
         ),
         orderBy: (comments, { asc }) => [asc(comments.createdAt)],
         with: {

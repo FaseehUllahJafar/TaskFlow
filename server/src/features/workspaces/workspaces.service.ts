@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
 import {
     workspaces,
@@ -201,7 +201,7 @@ export const inviteMember = async (
         where: and(
             eq(workspaceInvites.workspaceId, workspaceId),
             eq(workspaceInvites.email, data.email),
-            eq(workspaceInvites.acceptedAt, null)
+            isNull(workspaceInvites.acceptedAt)
         ),
     });
 

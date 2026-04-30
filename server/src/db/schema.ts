@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, jsonb, primaryKey, AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -153,7 +153,7 @@ export const taskAssignees = pgTable('task_assignees', {
     userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
 }, (table) => ({
-    pk: { columns: [table.taskId, table.userId] },
+    pk: primaryKey({ columns: [table.taskId, table.userId] }),
 }));
 
 // Task labels (composite key)
@@ -161,7 +161,7 @@ export const taskLabels = pgTable('task_labels', {
     taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
     labelId: uuid('label_id').notNull().references(() => labels.id, { onDelete: 'cascade' }),
 }, (table) => ({
-    pk: { columns: [table.taskId, table.labelId] },
+    pk: primaryKey({ columns: [table.taskId, table.labelId] }),
 }));
 
 // Attachments
@@ -183,7 +183,7 @@ export const comments = pgTable('comments', {
     taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
     userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     content: text('content').notNull(),
-    parentId: uuid('parent_id').references(() => comments.id, { onDelete: 'cascade' }),
+    parentId: uuid('parent_id').references((): AnyPgColumn => comments.id, { onDelete: 'cascade' }),
     isEdited: boolean('is_edited').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -243,10 +243,9 @@ export const subscriptions = pgTable('subscriptions', {
 export const usersRelations = relations(users, ({ many }) => ({
     refreshTokens: many(refreshTokens),
     ownedWorkspaces: many(workspaces),
-    workspaceMembers: many(workspaceMembers),
-    invitedWorkspaceMembers: many(workspaceMembers, { relationName: 'invitedBy' }),
-    workspaceInvites: many(workspaceInvites),
-    invitedWorkspaceInvites: many(workspaceInvites, { relationName: 'invitedByInvites' }),
+    workspaceMembers: many(workspaceMembers, { relationName: 'memberUser' }),
+    invitedWorkspaceMembers: many(workspaceMembers, { relationName: 'memberInviter' }),
+    invitedWorkspaceInvites: many(workspaceInvites),
     projects: many(projects),
     taskAssignees: many(taskAssignees),
     comments: many(comments),
@@ -322,6 +321,109 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
     parent: one(comments, {
         fields: [comments.parentId],
         references: [comments.id],
+        relationName: 'parent',
     }),
     replies: many(comments, { relationName: 'parent' }),
+}));
+
+export const workspaceMembersRelations = relations(workspaceMembers, ({ one }) => ({
+    workspace: one(workspaces, {
+        fields: [workspaceMembers.workspaceId],
+        references: [workspaces.id],
+    }),
+    user: one(users, {
+        fields: [workspaceMembers.userId],
+        references: [users.id],
+        relationName: 'memberUser',
+    }),
+    inviter: one(users, {
+        fields: [workspaceMembers.invitedBy],
+        references: [users.id],
+        relationName: 'memberInviter',
+    }),
+}));
+
+export const workspaceInvitesRelations = relations(workspaceInvites, ({ one }) => ({
+    workspace: one(workspaces, {
+        fields: [workspaceInvites.workspaceId],
+        references: [workspaces.id],
+    }),
+    inviter: one(users, {
+        fields: [workspaceInvites.invitedBy],
+        references: [users.id],
+    }),
+}));
+
+export const labelsRelations = relations(labels, ({ one, many }) => ({
+    workspace: one(workspaces, {
+        fields: [labels.workspaceId],
+        references: [workspaces.id],
+    }),
+    taskLabels: many(taskLabels),
+}));
+
+export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
+    task: one(tasks, {
+        fields: [taskAssignees.taskId],
+        references: [tasks.id],
+    }),
+    user: one(users, {
+        fields: [taskAssignees.userId],
+        references: [users.id],
+    }),
+}));
+
+export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
+    task: one(tasks, {
+        fields: [taskLabels.taskId],
+        references: [tasks.id],
+    }),
+    label: one(labels, {
+        fields: [taskLabels.labelId],
+        references: [labels.id],
+    }),
+}));
+
+export const attachmentsRelations = relations(attachments, ({ one }) => ({
+    task: one(tasks, {
+        fields: [attachments.taskId],
+        references: [tasks.id],
+    }),
+    uploader: one(users, {
+        fields: [attachments.uploadedBy],
+        references: [users.id],
+    }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, {
+        fields: [notifications.userId],
+        references: [users.id],
+    }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+    project: one(projects, {
+        fields: [activityLogs.projectId],
+        references: [projects.id],
+    }),
+    task: one(tasks, {
+        fields: [activityLogs.taskId],
+        references: [tasks.id],
+    }),
+    user: one(users, {
+        fields: [activityLogs.userId],
+        references: [users.id],
+    }),
+}));
+
+export const timeLogsRelations = relations(timeLogs, ({ one }) => ({
+    task: one(tasks, {
+        fields: [timeLogs.taskId],
+        references: [tasks.id],
+    }),
+    user: one(users, {
+        fields: [timeLogs.userId],
+        references: [users.id],
+    }),
 }));
