@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useAppSelector } from './hooks';
+import { useAppDispatch, useAppSelector } from './hooks';
+import { fetchCurrentUser } from './features/auth/authSlice';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
@@ -36,6 +38,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+    const dispatch = useAppDispatch();
+    const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+
+    // Restore the profile after a reload; the axios interceptor refreshes an expired token.
+    useEffect(() => {
+        if (isAuthenticated && !user) {
+            void dispatch(fetchCurrentUser());
+        }
+    }, [dispatch, isAuthenticated, user]);
+
     return (
         <ErrorBoundary>
             <Toaster position="top-right" />
