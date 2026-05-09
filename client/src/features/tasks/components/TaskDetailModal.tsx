@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Trash2, Paperclip, MessageSquare } from 'lucide-react';
-import { useAppDispatch, useAppSelector, useSocketTask } from '../../hooks';
+import { useAppDispatch, useAppSelector, useSocketTask } from '../../../hooks';
 import {
     getTaskById,
     updateTask,

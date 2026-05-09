@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAppDispatch } from '../../hooks';
-import { createWorkspace } from '../workspaces/workspacesSlice';
+import { useAppDispatch } from '../../../hooks';
+import { createWorkspace } from '../workspacesSlice';
 import { X } from 'lucide-react';
 
 const createWorkspaceSchema = z.object({

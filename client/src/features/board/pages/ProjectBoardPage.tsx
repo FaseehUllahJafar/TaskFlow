@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { useAppDispatch, useAppSelector, useSocketBoard } from '../../hooks';
-import { getBoardColumns, createColumn, deleteColumn, moveTask, updateTaskOptimistic } from '../board/boardSlice';
-import { getProjectById } from '../projects/projectsSlice';
-import BoardColumn from './components/BoardColumn';
-import TaskDetailModal from '../tasks/components/TaskDetailModal';
+import { useAppDispatch, useAppSelector, useSocketBoard } from '../../../hooks';
+import { getBoardColumns, createColumn, deleteColumn, moveTask, updateTaskOptimistic } from '../boardSlice';
+import { getProjectById } from '../../projects/projectsSlice';
+import BoardColumn from '../components/BoardColumn';
+import TaskDetailModal from '../../tasks/components/TaskDetailModal';
 import { Plus, ArrowLeft } from 'lucide-react';
 
 const ProjectBoardPage: React.FC = () => {

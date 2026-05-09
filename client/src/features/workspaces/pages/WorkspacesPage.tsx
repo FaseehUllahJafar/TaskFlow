@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../hooks';
-import { getWorkspaces, clearCurrentWorkspace } from '../workspaces/workspacesSlice';
+import { useAppDispatch, useAppSelector } from '../../../hooks';
+import { getWorkspaces, clearCurrentWorkspace } from '../workspacesSlice';
 import { FolderKanban, Plus } from 'lucide-react';
-import CreateWorkspaceModal from './components/CreateWorkspaceModal';
+import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 
 const WorkspacesPage: React.FC = () => {
     const navigate = useNavigate();

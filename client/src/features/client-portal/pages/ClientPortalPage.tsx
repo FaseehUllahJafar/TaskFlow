@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from '../../lib/axios';
+import axios from '../../../lib/axios';
 import { Plus, ArrowLeft } from 'lucide-react';
 
 interface ClientPortalBoard {
@@ -32,7 +32,7 @@ const ClientPortalPage: React.FC = () => {
                 if (!clientToken) throw new Error('No client token provided');
 
                 // Use public axios client without auth
-                const response = await axios.get(`/portal/${clientToken}`);
+                const response = await axios.get(`/projects/portal/${clientToken}`);
                 setBoard(response.data.data);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load board');

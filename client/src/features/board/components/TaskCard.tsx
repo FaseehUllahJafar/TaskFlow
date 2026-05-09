@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, MoreHorizontal, Calendar, User } from 'lucide-react';
-import { Task } from '../board/boardSlice';
-import { PRIORITY_COLORS, formatRelativeTime, isDueSoon, isOverdue } from '../../utils';
+import { Task } from '../boardSlice';
+import { PRIORITY_COLORS, formatRelativeTime, isDueSoon, isOverdue } from '../../../utils';
 
 interface TaskCardProps {
     task: Task;

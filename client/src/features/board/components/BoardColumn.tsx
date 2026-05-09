@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import { Draggable } from 'react-beautiful-dnd';
-import { Column } from '../board/boardSlice';
+import { Column } from '../boardSlice';
 import TaskCard from './TaskCard';
 
 interface BoardColumnProps {
