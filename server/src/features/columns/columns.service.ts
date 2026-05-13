@@ -169,6 +169,8 @@ export const deleteColumn = async (columnId: string, userId: string) => {
     }
 
     await db.delete(columns).where(eq(columns.id, columnId));
+
+    return { projectId: column.projectId };
 };
 
 export const reorderColumns = async (

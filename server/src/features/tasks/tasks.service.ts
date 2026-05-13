@@ -11,6 +11,7 @@ import {
 } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { getProjectMembership } from '../../utils/membership';
+import { createNotification } from '../notifications/notifications.service';
 
 export const createTask = async (
     columnId: string,
@@ -357,6 +358,8 @@ export const deleteTask = async (taskId: string, userId: string) => {
         userId,
         action: 'deleted',
     });
+
+    return { projectId: task.column.projectId };
 };
 
 export const moveTask = async (
@@ -455,7 +458,7 @@ export const addAssignees = async (
             taskId,
             userId: assigneeId,
         }))
-    );
+    ).onConflictDoNothing();
 
     // Log activity
     await db.insert(activityLogs).values({
@@ -465,6 +468,24 @@ export const addAssignees = async (
         action: 'assigned',
         metadata: { assigneeIds: userIds },
     });
+
+    // Tell the people who were just assigned (not the actor).
+    await Promise.all(
+        userIds
+            .filter((id) => id !== userId)
+            .map((id) =>
+                createNotification({
+                    userId: id,
+                    type: 'assigned',
+                    title: 'Task assigned',
+                    message: `You were assigned to "${task.title}"`,
+                    link: `/projects/${task.projectId}`,
+                    metadata: { taskId, projectId: task.projectId },
+                })
+            )
+    );
+
+    return { projectId: task.projectId };
 };
 
 export const removeAssignee = async (

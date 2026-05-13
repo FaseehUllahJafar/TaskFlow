@@ -3,6 +3,7 @@ import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { broadcastToProject, broadcastToTask } from '../../socket/realtime';
 import {
     createTaskSchema,
     updateTaskSchema,
@@ -41,6 +42,7 @@ router.post(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const task = await createTask(req.params.columnId, req.user!.id, req.body);
+        broadcastToProject(task.projectId, 'board:task-created', { taskId: task.id });
         res.status(201).json({
             success: true,
             message: 'Task created successfully',
@@ -105,6 +107,8 @@ router.patch(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const task = await updateTask(req.params.id, req.user!.id, req.body);
+        broadcastToProject(task.projectId, 'board:task-updated', { taskId: task.id });
+        broadcastToTask(task.id, 'task:updated', { taskId: task.id });
         res.status(200).json({
             success: true,
             message: 'Task updated successfully',
@@ -117,7 +121,8 @@ router.patch(
 router.delete(
     '/:id',
     asyncHandler(async (req: AuthRequest, res) => {
-        await deleteTask(req.params.id, req.user!.id);
+        const { projectId } = await deleteTask(req.params.id, req.user!.id);
+        broadcastToProject(projectId, 'board:task-deleted', { taskId: req.params.id });
         res.status(200).json({
             success: true,
             message: 'Task deleted successfully',
@@ -133,6 +138,7 @@ router.patch(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const task = await moveTask(req.params.id, req.user!.id, req.body);
+        broadcastToProject(task.projectId, 'board:task-updated', { taskId: task.id });
         res.status(200).json({
             success: true,
             message: 'Task moved successfully',
@@ -147,7 +153,9 @@ router.post(
     body('userIds').isArray(),
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
-        await addAssignees(req.params.id, req.user!.id, req.body.userIds);
+        const { projectId } = await addAssignees(req.params.id, req.user!.id, req.body.userIds);
+        broadcastToProject(projectId, 'board:task-updated', { taskId: req.params.id });
+        broadcastToTask(req.params.id, 'task:assignee-added', { taskId: req.params.id });
         res.status(200).json({
             success: true,
             message: 'Assignees added successfully',

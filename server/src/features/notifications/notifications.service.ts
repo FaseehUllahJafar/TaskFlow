@@ -1,6 +1,7 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { notifications, users } from '../../db/schema';
+import { broadcastToUser } from '../../socket/realtime';
 import AppError from '../../utils/AppError';
 
 export const getUserNotifications = async (userId: string, filters?: { isRead?: boolean }) => {
@@ -66,6 +67,8 @@ export const createNotification = async (data: {
         .insert(notifications)
         .values(data)
         .returning();
+
+    broadcastToUser(data.userId, 'notification:new', notification);
 
     return notification;
 };

@@ -1,6 +1,13 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { eq } from 'drizzle-orm';
+import { db } from '../config/db';
+import { tasks } from '../db/schema';
+import { getProjectMembership } from '../utils/membership';
 import logger from '../utils/logger';
+
+const isUuid = (value: unknown): value is string =>
+    typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 
 export interface AuthSocket extends Socket {
     userId?: string;
@@ -36,7 +43,10 @@ export const initializeSocket = (io: Server) => {
         }
 
         // Join project room
-        socket.on('join:project', (projectId: string) => {
+        socket.on('join:project', async (projectId: string) => {
+            if (!isUuid(projectId) || !socket.userId || !(await getProjectMembership(projectId, socket.userId))) {
+                return;
+            }
             socket.join(`project:${projectId}`);
             logger.info(`Socket ${socket.id} joined project:${projectId}`);
         });
@@ -48,7 +58,14 @@ export const initializeSocket = (io: Server) => {
         });
 
         // Join task room
-        socket.on('join:task', (taskId: string) => {
+        socket.on('join:task', async (taskId: string) => {
+            if (!isUuid(taskId)) {
+                return;
+            }
+            const task = await db.query.tasks.findFirst({ where: eq(tasks.id, taskId) });
+            if (!task || !socket.userId || !(await getProjectMembership(task.projectId, socket.userId))) {
+                return;
+            }
             socket.join(`task:${taskId}`);
             logger.info(`Socket ${socket.id} joined task:${taskId}`);
         });

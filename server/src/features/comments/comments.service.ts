@@ -1,6 +1,8 @@
 import { eq, and, desc, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
-import { comments, tasks, workspaceMembers, activityLogs } from '../../db/schema';
+import { comments, tasks, taskAssignees, activityLogs } from '../../db/schema';
+import { createNotification } from '../notifications/notifications.service';
+import { broadcastToTask } from '../../socket/realtime';
 import AppError from '../../utils/AppError';
 import { getProjectMembership } from '../../utils/membership';
 
@@ -30,7 +32,7 @@ export const createComment = async (
             where: eq(comments.id, data.parentId),
         });
 
-        if (!parentComment) {
+        if (!parentComment || parentComment.taskId !== taskId) {
             throw new AppError('Parent comment not found', 404);
         }
     }
@@ -53,6 +55,27 @@ export const createComment = async (
         action: 'commented',
         metadata: { commentId: newComment.id },
     });
+
+    // Let the assignees know, except the person who wrote the comment.
+    const assignees = await db.query.taskAssignees.findMany({
+        where: eq(taskAssignees.taskId, taskId),
+    });
+    await Promise.all(
+        assignees
+            .filter((a) => a.userId !== userId)
+            .map((a) =>
+                createNotification({
+                    userId: a.userId,
+                    type: 'comment',
+                    title: 'New comment',
+                    message: `New comment on "${task.title}"`,
+                    link: `/projects/${task.projectId}`,
+                    metadata: { taskId, projectId: task.projectId, commentId: newComment.id },
+                })
+            )
+    );
+
+    broadcastToTask(taskId, 'task:comment-added', newComment);
 
     return newComment;
 };

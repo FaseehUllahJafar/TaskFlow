@@ -3,6 +3,7 @@ import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { broadcastToProject } from '../../socket/realtime';
 import {
     createColumnSchema,
     updateColumnSchema,
@@ -30,6 +31,7 @@ router.post(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const column = await createColumn(req.params.projectId, req.user!.id, req.body);
+        broadcastToProject(req.params.projectId, 'board:column-created', { columnId: column.id });
         res.status(201).json({
             success: true,
             message: 'Column created successfully',
@@ -60,6 +62,7 @@ router.patch(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         await reorderColumns(req.params.projectId, req.user!.id, req.body.columns);
+        broadcastToProject(req.params.projectId, 'board:column-updated', {});
         res.status(200).json({
             success: true,
             message: 'Columns reordered successfully',
@@ -78,6 +81,7 @@ router.patch(
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
         const column = await updateColumn(req.params.id, req.user!.id, req.body);
+        broadcastToProject(column.projectId, 'board:column-updated', { columnId: column.id });
         res.status(200).json({
             success: true,
             message: 'Column updated successfully',
@@ -90,7 +94,8 @@ router.patch(
 router.delete(
     '/:id',
     asyncHandler(async (req: AuthRequest, res) => {
-        await deleteColumn(req.params.id, req.user!.id);
+        const { projectId } = await deleteColumn(req.params.id, req.user!.id);
+        broadcastToProject(projectId, 'board:column-deleted', { columnId: req.params.id });
         res.status(200).json({
             success: true,
             message: 'Column deleted successfully',

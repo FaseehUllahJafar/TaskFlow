@@ -5,6 +5,7 @@ import app from './app';
 import { pool } from './config/db';
 import redisClient, { connectRedis } from './config/redis';
 import { initializeSocket } from './socket';
+import { setIo } from './socket/realtime';
 import logger from './utils/logger';
 
 const server = http.createServer(app);
@@ -17,6 +18,7 @@ const io = new Server(server, {
 });
 
 initializeSocket(io);
+setIo(io);
 
 const startServer = async () => {
     try {
