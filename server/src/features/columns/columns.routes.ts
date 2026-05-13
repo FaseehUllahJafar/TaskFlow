@@ -52,6 +52,21 @@ router.get(
     })
 );
 
+// Reorder columns
+router.patch(
+    '/projects/:projectId/reorder',
+    param('projectId').isUUID(),
+    body('columns').isArray(),
+    validate,
+    asyncHandler(async (req: AuthRequest, res) => {
+        await reorderColumns(req.params.projectId, req.user!.id, req.body.columns);
+        res.status(200).json({
+            success: true,
+            message: 'Columns reordered successfully',
+        });
+    })
+);
+
 // Column-specific routes
 router.use('/:id', param('id').isUUID(), validate);
 
@@ -79,20 +94,6 @@ router.delete(
         res.status(200).json({
             success: true,
             message: 'Column deleted successfully',
-        });
-    })
-);
-
-// Reorder columns
-router.patch(
-    '/reorder',
-    body('columns').isArray(),
-    validate,
-    asyncHandler(async (req: AuthRequest, res) => {
-        await reorderColumns(req.params.projectId, req.user!.id, req.body.columns);
-        res.status(200).json({
-            success: true,
-            message: 'Columns reordered successfully',
         });
     })
 );

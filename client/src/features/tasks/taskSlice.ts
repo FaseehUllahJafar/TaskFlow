@@ -119,7 +119,7 @@ export const deleteTask = createAsyncThunk(
 export const addComment = createAsyncThunk(
     'task/addComment',
     async (data: { taskId: string; content: string; parentId?: string }) => {
-        const response = await axios.post(`/tasks/${data.taskId}/comments`, {
+        const response = await axios.post(`/comments/tasks/${data.taskId}`, {
             content: data.content,
             parentId: data.parentId,
         });
@@ -130,7 +130,7 @@ export const addComment = createAsyncThunk(
 export const updateComment = createAsyncThunk(
     'task/updateComment',
     async (data: { taskId: string; commentId: string; content: string }) => {
-        const response = await axios.patch(`/tasks/${data.taskId}/comments/${data.commentId}`, {
+        const response = await axios.patch(`/comments/${data.commentId}`, {
             content: data.content,
         });
         return response.data.data;
@@ -140,7 +140,7 @@ export const updateComment = createAsyncThunk(
 export const deleteComment = createAsyncThunk(
     'task/deleteComment',
     async (data: { taskId: string; commentId: string }) => {
-        await axios.delete(`/tasks/${data.taskId}/comments/${data.commentId}`);
+        await axios.delete(`/comments/${data.commentId}`);
         return data.commentId;
     }
 );
@@ -151,7 +151,7 @@ export const uploadAttachment = createAsyncThunk(
         const formData = new FormData();
         formData.append('file', data.file);
 
-        const response = await axios.post(`/tasks/${data.taskId}/attachments`, formData, {
+        const response = await axios.post(`/attachments/tasks/${data.taskId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -163,7 +163,7 @@ export const uploadAttachment = createAsyncThunk(
 export const deleteAttachment = createAsyncThunk(
     'task/deleteAttachment',
     async (data: { taskId: string; attachmentId: string }) => {
-        await axios.delete(`/tasks/${data.taskId}/attachments/${data.attachmentId}`);
+        await axios.delete(`/attachments/${data.attachmentId}`);
         return data.attachmentId;
     }
 );

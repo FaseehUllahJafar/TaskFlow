@@ -69,6 +69,18 @@ router.patch(
     })
 );
 
+// Delete all read
+router.delete(
+    '/read-all',
+    asyncHandler(async (req: AuthRequest, res) => {
+        await deleteAllRead(req.user!.id);
+        res.status(200).json({
+            success: true,
+            message: 'All read notifications deleted',
+        });
+    })
+);
+
 // Delete notification
 router.delete(
     '/:id',
@@ -79,18 +91,6 @@ router.delete(
         res.status(200).json({
             success: true,
             message: 'Notification deleted',
-        });
-    })
-);
-
-// Delete all read
-router.delete(
-    '/read-all',
-    asyncHandler(async (req: AuthRequest, res) => {
-        await deleteAllRead(req.user!.id);
-        res.status(200).json({
-            success: true,
-            message: 'All read notifications deleted',
         });
     })
 );

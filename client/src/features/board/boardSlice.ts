@@ -87,7 +87,7 @@ export const moveTask = createAsyncThunk(
 export const reorderTasks = createAsyncThunk(
     'board/reorderTasks',
     async (data: { columnId: string; tasks: Array<{ id: string; position: number }> }) => {
-        const response = await axios.patch(`/columns/${data.columnId}/reorder`, {
+        const response = await axios.patch(`/tasks/columns/${data.columnId}/reorder`, {
             tasks: data.tasks,
         });
         return response.data.data;

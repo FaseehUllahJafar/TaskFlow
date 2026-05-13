@@ -67,6 +67,21 @@ router.get(
     })
 );
 
+// Reorder tasks
+router.patch(
+    '/columns/:columnId/reorder',
+    param('columnId').isUUID(),
+    body('tasks').isArray(),
+    validate,
+    asyncHandler(async (req: AuthRequest, res) => {
+        await reorderTasks(req.params.columnId, req.user!.id, req.body.tasks);
+        res.status(200).json({
+            success: true,
+            message: 'Tasks reordered successfully',
+        });
+    })
+);
+
 // Task-specific routes
 router.use('/:id', param('id').isUUID(), validate);
 
@@ -122,21 +137,6 @@ router.patch(
             success: true,
             message: 'Task moved successfully',
             data: task,
-        });
-    })
-);
-
-// Reorder tasks
-router.patch(
-    '/columns/:columnId/reorder',
-    param('columnId').isUUID(),
-    body('tasks').isArray(),
-    validate,
-    asyncHandler(async (req: AuthRequest, res) => {
-        await reorderTasks(req.params.columnId, req.user!.id, req.body.tasks);
-        res.status(200).json({
-            success: true,
-            message: 'Tasks reordered successfully',
         });
     })
 );
