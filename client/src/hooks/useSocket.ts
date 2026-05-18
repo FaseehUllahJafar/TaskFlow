@@ -1,178 +1,79 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './index';
-import { initializeSocket, getSocket } from '../lib/socket';
-import { getBoardColumns, updateTaskOptimistic, reorderColumns } from '../features/board/boardSlice';
+import { initializeSocket } from '../lib/socket';
+import { getBoardColumns } from '../features/board/boardSlice';
+import { getTaskById } from '../features/tasks/taskSlice';
 
+const BOARD_EVENTS = [
+    'board:task-created',
+    'board:task-updated',
+    'board:task-deleted',
+    'board:column-created',
+    'board:column-updated',
+    'board:column-deleted',
+] as const;
+
+const TASK_EVENTS = ['task:comment-added', 'task:attachment-added', 'task:assignee-added', 'task:updated'] as const;
+
+/** Keeps the board in sync: any change published for the project triggers a refetch. */
 export const useSocketBoard = (projectId?: string) => {
     const dispatch = useAppDispatch();
-    const { accessToken } = useAppSelector((state) => state.auth);
+    const accessToken = useAppSelector((state) => state.auth.accessToken);
 
     useEffect(() => {
         if (!accessToken || !projectId) return;
 
         const socket = initializeSocket(accessToken);
+        const refresh = () => {
+            void dispatch(getBoardColumns(projectId));
+        };
 
-        // Join project room for real-time updates
-        socket.emit('join-room', { type: 'project', id: projectId });
-
-        // Listen for board updates
-        socket.on('board:task-created', (data) => {
-            // Task was created, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
-
-        socket.on('board:task-updated', (data) => {
-            // Task was updated, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
-
-        socket.on('board:task-moved', (data: { taskId: string; sourceColumnId: string; destColumnId: string; newIndex: number }) => {
-            // Optimistic update from another user
-            dispatch(updateTaskOptimistic(data));
-        });
-
-        socket.on('board:task-deleted', (data) => {
-            // Task was deleted, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
-
-        socket.on('board:column-created', (data) => {
-            // Column was created, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
-
-        socket.on('board:column-updated', (data) => {
-            // Column was updated, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
-
-        socket.on('board:column-reordered', (data: { columns: any[] }) => {
-            // Columns were reordered
-            dispatch(reorderColumns(data.columns));
-        });
-
-        socket.on('board:column-deleted', (data) => {
-            // Column was deleted, refresh the board
-            dispatch(getBoardColumns(projectId));
-        });
+        socket.emit('join:project', projectId);
+        BOARD_EVENTS.forEach((event) => socket.on(event, refresh));
 
         return () => {
-            socket.off('board:task-created');
-            socket.off('board:task-updated');
-            socket.off('board:task-moved');
-            socket.off('board:task-deleted');
-            socket.off('board:column-created');
-            socket.off('board:column-updated');
-            socket.off('board:column-reordered');
-            socket.off('board:column-deleted');
-            socket.emit('leave-room', { type: 'project', id: projectId });
+            BOARD_EVENTS.forEach((event) => socket.off(event, refresh));
+            socket.emit('leave:project', projectId);
         };
     }, [projectId, accessToken, dispatch]);
 };
 
+/** Reloads the open task when someone else comments, assigns or edits it. */
 export const useSocketTask = (taskId?: string) => {
     const dispatch = useAppDispatch();
-    const { accessToken } = useAppSelector((state) => state.auth);
+    const accessToken = useAppSelector((state) => state.auth.accessToken);
 
     useEffect(() => {
         if (!accessToken || !taskId) return;
 
         const socket = initializeSocket(accessToken);
+        const refresh = () => {
+            void dispatch(getTaskById(taskId));
+        };
 
-        // Join task room for real-time updates
-        socket.emit('join-room', { type: 'task', id: taskId });
-
-        // Listen for task updates
-        socket.on('task:comment-added', (data) => {
-            // New comment was added
-            console.log('New comment:', data);
-        });
-
-        socket.on('task:attachment-added', (data) => {
-            // New attachment was added
-            console.log('New attachment:', data);
-        });
-
-        socket.on('task:assignee-added', (data) => {
-            // Assignee was added
-            console.log('New assignee:', data);
-        });
-
-        socket.on('task:updated', (data) => {
-            // Task was updated
-            console.log('Task updated:', data);
-        });
+        socket.emit('join:task', taskId);
+        TASK_EVENTS.forEach((event) => socket.on(event, refresh));
 
         return () => {
-            socket.off('task:comment-added');
-            socket.off('task:attachment-added');
-            socket.off('task:assignee-added');
-            socket.off('task:updated');
-            socket.emit('leave-room', { type: 'task', id: taskId });
+            TASK_EVENTS.forEach((event) => socket.off(event, refresh));
+            socket.emit('leave:task', taskId);
         };
     }, [taskId, accessToken, dispatch]);
 };
 
-export const useSocketNotifications = () => {
-    const dispatch = useAppDispatch();
-    const { accessToken, user } = useAppSelector((state) => state.auth);
+/** Calls `onNotification` whenever the server pushes a notification to the current user. */
+export const useSocketNotifications = (onNotification: () => void) => {
+    const accessToken = useAppSelector((state) => state.auth.accessToken);
 
     useEffect(() => {
-        if (!accessToken || !user?.id) return;
+        if (!accessToken) return;
 
+        // The server puts every authenticated socket in its own user room, so no join is needed.
         const socket = initializeSocket(accessToken);
-
-        // Join user notification room
-        socket.emit('join-room', { type: 'user', id: user.id });
-
-        // Listen for new notifications
-        socket.on('notification:new', (data) => {
-            // New notification received
-            console.log('New notification:', data);
-            // You can dispatch an action to add this to the notifications state
-        });
-
-        socket.on('notification:count-update', (data) => {
-            // Unread count updated
-            console.log('Notification count:', data.unreadCount);
-        });
+        socket.on('notification:new', onNotification);
 
         return () => {
-            socket.off('notification:new');
-            socket.off('notification:count-update');
-            socket.emit('leave-room', { type: 'user', id: user.id });
+            socket.off('notification:new', onNotification);
         };
-    }, [accessToken, user?.id, dispatch]);
-};
-
-export const useSocketPresence = (projectId?: string) => {
-    const { accessToken } = useAppSelector((state) => state.auth);
-
-    useEffect(() => {
-        if (!accessToken || !projectId) return;
-
-        const socket = initializeSocket(accessToken);
-
-        // Join project room to get presence updates
-        socket.emit('join-room', { type: 'project', id: projectId });
-
-        // Listen for presence updates
-        socket.on('presence:user-online', (data) => {
-            console.log('User online:', data.userId);
-        });
-
-        socket.on('presence:user-offline', (data) => {
-            console.log('User offline:', data.userId);
-        });
-
-        socket.on('presence:users-list', (data) => {
-            console.log('Users online:', data.users);
-        });
-
-        return () => {
-            socket.off('presence:user-online');
-            socket.off('presence:user-offline');
-            socket.off('presence:users-list');
-        };
-    }, [projectId, accessToken]);
+    }, [accessToken, onNotification]);
 };

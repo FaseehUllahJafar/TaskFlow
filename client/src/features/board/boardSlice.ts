@@ -143,10 +143,6 @@ const boardSlice = createSlice({
             })
             .addCase(deleteColumn.fulfilled, (state, action) => {
                 state.columns = state.columns.filter(c => c.id !== action.payload);
-            })
-            .addCase(moveTask.fulfilled, (state, action) => {
-                // Refresh the entire board after moving task
-                // The server will handle position updates
             });
     },
 });

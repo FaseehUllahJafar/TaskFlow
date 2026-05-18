@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, MoreHorizontal, Calendar, User } from 'lucide-react';
+import React from 'react';
+import { Calendar, User } from 'lucide-react';
 import { Task } from '../boardSlice';
 import { PRIORITY_COLORS, formatRelativeTime, isDueSoon, isOverdue } from '../../../utils';
 

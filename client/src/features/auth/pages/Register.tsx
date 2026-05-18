@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,6 +24,11 @@ type RegisterForm = z.infer<typeof registerSchema>;
 const Register: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+
+    // Drop any stale error from a previous attempt when the page opens.
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
     const { isLoading, error } = useAppSelector((state) => state.auth);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);

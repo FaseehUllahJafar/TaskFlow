@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from '../../../lib/axios';
-import { Plus, ArrowLeft } from 'lucide-react';
 
 interface ClientPortalBoard {
     id: string;

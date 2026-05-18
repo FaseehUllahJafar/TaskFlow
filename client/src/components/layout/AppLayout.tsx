@@ -3,7 +3,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { logout } from '../../features/auth/authSlice';
 import NotificationBell from '../../features/notifications/components/NotificationBell';
-import { Settings, LogOut, Plus, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 
 const AppLayout: React.FC = () => {
     const dispatch = useAppDispatch();
