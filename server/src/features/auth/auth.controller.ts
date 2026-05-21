@@ -3,7 +3,7 @@ import { db } from '../../config/db';
 import { users, refreshTokens, workspaceMembers, workspaces } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { generateRandomToken, hashToken } from '../../utils/crypto';
-import { sendEmail } from '../../config/nodemailer';
+import { trySendEmail, escapeHtml } from '../../config/nodemailer';
 import {
     hashPassword,
     comparePassword,
@@ -47,12 +47,12 @@ export const register = async (data: RegisterInput) => {
 
     // Send verification email
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    await sendEmail({
+    await trySendEmail({
         to: data.email,
         subject: 'Verify your email - TaskFlow',
         html: `
       <h1>Welcome to TaskFlow!</h1>
-      <p>Hi ${data.fullName},</p>
+      <p>Hi ${escapeHtml(data.fullName)},</p>
       <p>Thank you for registering. Please verify your email by clicking the link below:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Verify Email</a>
       <p>This link will expire in 24 hours.</p>
@@ -148,12 +148,12 @@ export const forgotPassword = async (email: string) => {
 
     // Send reset email
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    await sendEmail({
+    await trySendEmail({
         to: email,
         subject: 'Password Reset - TaskFlow',
         html: `
       <h1>Password Reset Request</h1>
-      <p>Hi ${user.fullName},</p>
+      <p>Hi ${escapeHtml(user.fullName)},</p>
       <p>You requested to reset your password. Click the link below to set a new password:</p>
       <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Reset Password</a>
       <p>This link will expire in 1 hour.</p>

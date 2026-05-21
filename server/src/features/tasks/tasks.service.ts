@@ -351,12 +351,12 @@ export const deleteTask = async (taskId: string, userId: string) => {
 
     await db.delete(tasks).where(eq(tasks.id, taskId));
 
-    // Log activity
+    // The task row is gone, so the log can't reference it; keep the identity in metadata instead.
     await db.insert(activityLogs).values({
         projectId: task.column.projectId,
-        taskId,
         userId,
         action: 'deleted',
+        metadata: { taskId, taskTitle: task.title },
     });
 
     return { projectId: task.column.projectId };
