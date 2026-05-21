@@ -37,3 +37,6 @@ yarn-error.log*
 # Drizzle
 drizzle/meta/
 *.sql
+
+# keep drizzle migrations
+!src/db/migrations/*.sql
