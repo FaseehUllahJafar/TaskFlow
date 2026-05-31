@@ -8,7 +8,12 @@ export const errorHandler = (
     res: Response,
     next: NextFunction
 ) => {
-    logger.error('Error:', err);
+    // Expected client errors (bad input, auth failures) are warnings; only real faults are errors.
+    if (err instanceof AppError && err.statusCode < 500) {
+        logger.warn(`${err.statusCode} ${err.message}`);
+    } else {
+        logger.error('Unhandled error', err);
+    }
 
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
