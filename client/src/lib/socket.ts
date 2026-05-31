@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:5000';
+// An empty VITE_WS_URL means "same origin" (the nginx image proxies /socket.io to the API).
+const WS_URL: string = import.meta.env.VITE_WS_URL ?? 'http://localhost:5000';
 
 let socket: Socket | null = null;
 
@@ -9,7 +10,7 @@ export const initializeSocket = (token: string): Socket => {
         return socket;
     }
 
-    socket = io(WS_URL, {
+    socket = io(WS_URL || undefined, {
         auth: {
             token,
         },
