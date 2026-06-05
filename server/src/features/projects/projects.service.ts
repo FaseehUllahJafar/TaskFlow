@@ -1,11 +1,9 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../../config/db';
 import {
     projects,
     columns,
-    tasks,
     workspaceMembers,
-    workspaces,
 } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { generateClientToken } from '../../utils/crypto';
@@ -274,11 +272,7 @@ export const generateClientLink = async (projectId: string, userId: string) => {
 
     const clientToken = generateClientToken();
 
-    const [updatedProject] = await db
-        .update(projects)
-        .set({ clientToken })
-        .where(eq(projects.id, projectId))
-        .returning();
+    await db.update(projects).set({ clientToken }).where(eq(projects.id, projectId));
 
     return { clientToken, projectId };
 };

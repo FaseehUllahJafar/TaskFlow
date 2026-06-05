@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../config/db';
-import { attachments, tasks, workspaceMembers } from '../../db/schema';
+import { attachments, tasks } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { getProjectMembership } from '../../utils/membership';
 

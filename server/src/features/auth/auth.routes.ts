@@ -5,14 +5,6 @@ import { validate } from '../../middleware/validate';
 import { authLimiter } from '../../middleware/rateLimiter';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
-    registerSchema,
-    loginSchema,
-    forgotPasswordSchema,
-    resetPasswordSchema,
-    updateProfileSchema,
-    changePasswordSchema,
-} from './auth.schema';
-import {
     register,
     login,
     logout,

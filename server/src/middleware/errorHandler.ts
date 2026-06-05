@@ -6,7 +6,7 @@ export const errorHandler = (
     err: Error | AppError,
     req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
 ) => {
     // Expected client errors (bad input, auth failures) are warnings; only real faults are errors.
     if (err instanceof AppError && err.statusCode < 500) {

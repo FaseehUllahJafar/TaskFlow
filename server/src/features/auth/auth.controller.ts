@@ -1,6 +1,6 @@
 import { eq, and, gt } from 'drizzle-orm';
 import { db } from '../../config/db';
-import { users, refreshTokens, workspaceMembers, workspaces } from '../../db/schema';
+import { users } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { generateRandomToken, hashToken } from '../../utils/crypto';
 import { trySendEmail, escapeHtml } from '../../config/nodemailer';
@@ -14,7 +14,6 @@ import {
 } from './auth.service';
 import type { RegisterInput, ResetPasswordInput } from './auth.schema';
 
-const VERIFICATION_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 const RESET_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour
 
 export const register = async (data: RegisterInput) => {
@@ -55,7 +54,6 @@ export const register = async (data: RegisterInput) => {
       <p>Hi ${escapeHtml(data.fullName)},</p>
       <p>Thank you for registering. Please verify your email by clicking the link below:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Verify Email</a>
-      <p>This link will expire in 24 hours.</p>
       <p>If you didn't create this account, please ignore this email.</p>
     `,
     });

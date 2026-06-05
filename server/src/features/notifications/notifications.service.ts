@@ -1,6 +1,6 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../../config/db';
-import { notifications, users } from '../../db/schema';
+import { notifications } from '../../db/schema';
 import { broadcastToUser } from '../../socket/realtime';
 import AppError from '../../utils/AppError';
 

@@ -1,4 +1,4 @@
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { comments, tasks, taskAssignees, activityLogs } from '../../db/schema';
 import { createNotification } from '../notifications/notifications.service';

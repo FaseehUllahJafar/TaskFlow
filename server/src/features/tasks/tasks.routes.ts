@@ -5,14 +5,6 @@ import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { broadcastToProject, broadcastToTask } from '../../socket/realtime';
 import {
-    createTaskSchema,
-    updateTaskSchema,
-    moveTaskSchema,
-    reorderTasksSchema,
-    addAssigneesSchema,
-    addLabelsSchema,
-} from './tasks.schema';
-import {
     createTask,
     getTasks,
     getTaskById,

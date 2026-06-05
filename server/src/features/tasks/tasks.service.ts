@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, inArray, SQL } from 'drizzle-orm';
+import { eq, and, sql, inArray, SQL } from 'drizzle-orm';
 import { db } from '../../config/db';
 import {
     tasks,

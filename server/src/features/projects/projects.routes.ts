@@ -3,7 +3,6 @@ import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { createProjectSchema, updateProjectSchema } from './projects.schema';
 import {
     createProject,
     getWorkspaceProjects,

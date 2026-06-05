@@ -5,7 +5,6 @@ import { db } from '../../config/db';
 import { users } from '../../db/schema';
 import { createTokenPair } from './auth.service';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import AppError from '../../utils/AppError';
 
 const router = Router();
 

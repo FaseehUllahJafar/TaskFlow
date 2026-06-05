@@ -1,6 +1,6 @@
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../config/db';
-import { columns, projects, workspaceMembers, tasks } from '../../db/schema';
+import { columns, projects, workspaceMembers } from '../../db/schema';
 import AppError from '../../utils/AppError';
 
 export const createColumn = async (

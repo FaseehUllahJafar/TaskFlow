@@ -5,11 +5,6 @@ import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { broadcastToProject } from '../../socket/realtime';
 import {
-    createColumnSchema,
-    updateColumnSchema,
-    reorderColumnsSchema,
-} from './columns.schema';
-import {
     createColumn,
     getProjectColumns,
     updateColumn,

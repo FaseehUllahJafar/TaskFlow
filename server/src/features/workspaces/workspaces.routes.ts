@@ -4,12 +4,6 @@ import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
-    createWorkspaceSchema,
-    updateWorkspaceSchema,
-    inviteMemberSchema,
-    updateMemberRoleSchema,
-} from './workspaces.schema';
-import {
     createWorkspace,
     getUserWorkspaces,
     getWorkspaceById,

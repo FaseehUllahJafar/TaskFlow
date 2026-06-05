@@ -1,13 +1,13 @@
-import { eq, and, sql, isNull } from 'drizzle-orm';
+import { eq, and, gt, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
 import {
     workspaces,
     workspaceMembers,
     workspaceInvites,
-    projects,
     users,
 } from '../../db/schema';
 import AppError from '../../utils/AppError';
+import { trySendEmail, escapeHtml } from '../../config/nodemailer';
 import { generateSlug, generateRandomToken } from '../../utils/crypto';
 
 const INVITE_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -201,7 +201,8 @@ export const inviteMember = async (
         where: and(
             eq(workspaceInvites.workspaceId, workspaceId),
             eq(workspaceInvites.email, data.email),
-            isNull(workspaceInvites.acceptedAt)
+            isNull(workspaceInvites.acceptedAt),
+            gt(workspaceInvites.expiresAt, new Date())
         ),
     });
 
@@ -223,8 +224,18 @@ export const inviteMember = async (
         })
         .returning();
 
-    // TODO: Send invite email
+    const workspace = await db.query.workspaces.findFirst({ where: eq(workspaces.id, workspaceId) });
     const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite/${token}`;
+    await trySendEmail({
+        to: data.email,
+        subject: `You were invited to ${workspace?.name ?? 'a workspace'} on TaskFlow`,
+        html: `
+      <h1>You're invited</h1>
+      <p>You were invited to join <strong>${escapeHtml(workspace?.name ?? 'a workspace')}</strong> on TaskFlow.</p>
+      <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Accept invitation</a>
+      <p>This invitation expires in 7 days.</p>
+    `,
+    });
 
     return invite;
 };
