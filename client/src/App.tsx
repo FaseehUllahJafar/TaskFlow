@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { fetchCurrentUser } from './features/auth/authSlice';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
+import ForgotPassword from './features/auth/pages/ForgotPassword';
+import ResetPassword from './features/auth/pages/ResetPassword';
+import VerifyEmail from './features/auth/pages/VerifyEmail';
+import AcceptInvitePage from './features/workspaces/pages/AcceptInvitePage';
 import AppLayout from './components/layout/AppLayout';
 import WorkspacesPage from './features/workspaces/pages/WorkspacesPage';
 import ProjectBoardPage from './features/board/pages/ProjectBoardPage';
@@ -29,9 +33,11 @@ const AuthCallback = () => {
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAppSelector((state) => state.auth);
+    const location = useLocation();
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        // Remember where the user was headed (e.g. an invite link) so login can return there.
+        return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
     return <>{children}</>;
@@ -57,6 +63,9 @@ function App() {
                 {/* Auth routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/verify-email/:token" element={<VerifyEmail />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* Client Portal (public, no auth required) */}
@@ -75,6 +84,7 @@ function App() {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="workspaces" element={<WorkspacesPage />} />
                     <Route path="workspaces/new" element={<WorkspacesPage />} />
+                    <Route path="accept-invite/:token" element={<AcceptInvitePage />} />
                     <Route path="projects/:projectId" element={<ProjectBoardPage />} />
                 </Route>
 

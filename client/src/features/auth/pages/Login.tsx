@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../hooks';
 import { login, clearError } from '../authSlice';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -16,6 +16,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || '/dashboard';
     const dispatch = useAppDispatch();
 
     // Drop any stale error from a previous attempt when the page opens.
@@ -36,7 +38,7 @@ const Login: React.FC = () => {
     const onSubmit = async (data: LoginForm) => {
         const result = await dispatch(login(data));
         if (login.fulfilled.match(result)) {
-            navigate('/dashboard');
+            navigate(redirectTo, { replace: true });
         }
     };
 

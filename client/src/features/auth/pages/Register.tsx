@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../hooks';
 import { register, clearError } from '../authSlice';
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -23,6 +23,8 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || '/dashboard';
     const dispatch = useAppDispatch();
 
     // Drop any stale error from a previous attempt when the page opens.
@@ -48,7 +50,7 @@ const Register: React.FC = () => {
             fullName: data.fullName,
         }));
         if (register.fulfilled.match(result)) {
-            navigate('/dashboard');
+            navigate(redirectTo, { replace: true });
         }
     };
 
