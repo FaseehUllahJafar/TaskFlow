@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+import { MulterError } from 'multer';
 import AppError from '../utils/AppError';
 
 export const errorHandler = (
@@ -9,10 +10,18 @@ export const errorHandler = (
     _next: NextFunction
 ) => {
     // Expected client errors (bad input, auth failures) are warnings; only real faults are errors.
-    if (err instanceof AppError && err.statusCode < 500) {
-        logger.warn(`${err.statusCode} ${err.message}`);
+    if (err instanceof MulterError || (err instanceof AppError && err.statusCode < 500)) {
+        logger.warn(err.message);
     } else {
         logger.error('Unhandled error', err);
+    }
+
+    if (err instanceof MulterError) {
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({
+            success: false,
+            message: err.code === 'LIMIT_FILE_SIZE' ? 'File is too large (10MB max)' : err.message,
+        });
     }
 
     if (err instanceof AppError) {

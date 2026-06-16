@@ -104,16 +104,3 @@ export const initializeSocket = (io: Server) => {
         });
     });
 };
-
-// Helper function to emit events to rooms
-export const emitToRoom = (io: Server, room: string, event: string, data: any, excludeSocketId?: string) => {
-    if (excludeSocketId) {
-        io.to(room).except(excludeSocketId).emit(event, data);
-    } else {
-        io.to(room).emit(event, data);
-    }
-};
-
-export const emitToUser = (io: Server, userId: string, event: string, data: any) => {
-    io.to(`user:${userId}`).emit(event, data);
-};

@@ -21,7 +21,12 @@ router.get(
     passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login` }),
     asyncHandler(async (req, res) => {
         // User is authenticated, create or update user in database
-        const googleUser = req.user as any;
+        const googleUser = req.user as unknown as {
+            googleId: string;
+            email: string;
+            fullName: string;
+            avatarUrl?: string;
+        };
 
         // Check if user exists with this Google ID
         let user = await db.query.users.findFirst({

@@ -1,10 +1,10 @@
 {
-  "id": "842ca688-77d1-4722-8552-2a18eb77cbf3",
+  "id": "34eac67b-b38a-43c2-bcb4-7836279f5308",
   "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "activity_logs": {
+    "public.activity_logs": {
       "name": "activity_logs",
       "schema": "",
       "columns": {
@@ -36,6 +36,7 @@
         "action": {
           "name": "action",
           "type": "activity_action",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -96,9 +97,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "attachments": {
+    "public.attachments": {
       "name": "attachments",
       "schema": "",
       "columns": {
@@ -189,9 +193,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "columns": {
+    "public.columns": {
       "name": "columns",
       "schema": "",
       "columns": {
@@ -264,9 +271,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "comments": {
+    "public.comments": {
       "name": "comments",
       "schema": "",
       "columns": {
@@ -366,9 +376,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "labels": {
+    "public.labels": {
       "name": "labels",
       "schema": "",
       "columns": {
@@ -429,9 +442,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "notifications": {
+    "public.notifications": {
       "name": "notifications",
       "schema": "",
       "columns": {
@@ -451,6 +467,7 @@
         "type": {
           "name": "type",
           "type": "notification_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -510,9 +527,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "projects": {
+    "public.projects": {
       "name": "projects",
       "schema": "",
       "columns": {
@@ -625,9 +645,12 @@
             "client_token"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "refresh_tokens": {
+    "public.refresh_tokens": {
       "name": "refresh_tokens",
       "schema": "",
       "columns": {
@@ -702,9 +725,12 @@
             "token_hash"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "subscriptions": {
+    "public.subscriptions": {
       "name": "subscriptions",
       "schema": "",
       "columns": {
@@ -736,12 +762,14 @@
         "plan": {
           "name": "plan",
           "type": "billing_plan",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
         "status": {
           "name": "status",
           "type": "subscription_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -791,9 +819,12 @@
             "workspace_id"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "task_assignees": {
+    "public.task_assignees": {
       "name": "task_assignees",
       "schema": "",
       "columns": {
@@ -855,9 +886,12 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "task_labels": {
+    "public.task_labels": {
       "name": "task_labels",
       "schema": "",
       "columns": {
@@ -912,9 +946,12 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "tasks": {
+    "public.tasks": {
       "name": "tasks",
       "schema": "",
       "columns": {
@@ -952,6 +989,7 @@
         "priority": {
           "name": "priority",
           "type": "task_priority",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'none'"
@@ -1044,9 +1082,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "time_logs": {
+    "public.time_logs": {
       "name": "time_logs",
       "schema": "",
       "columns": {
@@ -1138,9 +1179,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -1245,9 +1289,12 @@
             "google_id"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "workspace_invites": {
+    "public.workspace_invites": {
       "name": "workspace_invites",
       "schema": "",
       "columns": {
@@ -1273,6 +1320,7 @@
         "role": {
           "name": "role",
           "type": "user_role",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -1346,9 +1394,12 @@
             "token"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "workspace_members": {
+    "public.workspace_members": {
       "name": "workspace_members",
       "schema": "",
       "columns": {
@@ -1374,6 +1425,7 @@
         "role": {
           "name": "role",
           "type": "user_role",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -1448,9 +1500,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "workspaces": {
+    "public.workspaces": {
       "name": "workspaces",
       "schema": "",
       "columns": {
@@ -1531,75 +1586,88 @@
             "slug"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
-    "activity_action": {
+    "public.activity_action": {
       "name": "activity_action",
-      "values": {
-        "created": "created",
-        "updated": "updated",
-        "deleted": "deleted",
-        "moved": "moved",
-        "assigned": "assigned",
-        "unassigned": "unassigned",
-        "commented": "commented",
-        "attached": "attached",
-        "completed": "completed",
-        "reopened": "reopened"
-      }
+      "schema": "public",
+      "values": [
+        "created",
+        "updated",
+        "deleted",
+        "moved",
+        "assigned",
+        "unassigned",
+        "commented",
+        "attached",
+        "completed",
+        "reopened"
+      ]
     },
-    "billing_plan": {
+    "public.billing_plan": {
       "name": "billing_plan",
-      "values": {
-        "free": "free",
-        "pro": "pro",
-        "enterprise": "enterprise"
-      }
+      "schema": "public",
+      "values": [
+        "free",
+        "pro",
+        "enterprise"
+      ]
     },
-    "notification_type": {
+    "public.notification_type": {
       "name": "notification_type",
-      "values": {
-        "assigned": "assigned",
-        "mentioned": "mentioned",
-        "comment": "comment",
-        "due_soon": "due_soon",
-        "overdue": "overdue",
-        "workspace_invite": "workspace_invite",
-        "task_moved": "task_moved"
-      }
+      "schema": "public",
+      "values": [
+        "assigned",
+        "mentioned",
+        "comment",
+        "due_soon",
+        "overdue",
+        "workspace_invite",
+        "task_moved"
+      ]
     },
-    "subscription_status": {
+    "public.subscription_status": {
       "name": "subscription_status",
-      "values": {
-        "active": "active",
-        "trialing": "trialing",
-        "past_due": "past_due",
-        "canceled": "canceled",
-        "unpaid": "unpaid"
-      }
+      "schema": "public",
+      "values": [
+        "active",
+        "trialing",
+        "past_due",
+        "canceled",
+        "unpaid"
+      ]
     },
-    "task_priority": {
+    "public.task_priority": {
       "name": "task_priority",
-      "values": {
-        "none": "none",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "urgent": "urgent"
-      }
+      "schema": "public",
+      "values": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ]
     },
-    "user_role": {
+    "public.user_role": {
       "name": "user_role",
-      "values": {
-        "admin": "admin",
-        "member": "member",
-        "client": "client"
-      }
+      "schema": "public",
+      "values": [
+        "admin",
+        "member",
+        "client"
+      ]
     }
   },
   "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

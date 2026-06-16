@@ -6,7 +6,7 @@ export const createNotificationSchema = z.object({
     title: z.string(),
     message: z.string(),
     link: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateNotificationInput = z.infer<typeof createNotificationSchema>;

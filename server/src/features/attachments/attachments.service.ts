@@ -3,6 +3,8 @@ import { db } from '../../config/db';
 import { attachments, tasks } from '../../db/schema';
 import AppError from '../../utils/AppError';
 import { getProjectMembership } from '../../utils/membership';
+import { deleteRemoteFile, isCloudinaryConfigured, uploadBuffer } from '../../config/cloudinary';
+import logger from '../../utils/logger';
 
 export const uploadAttachment = async (
     taskId: string,
@@ -24,15 +26,21 @@ export const uploadAttachment = async (
         throw new AppError('You do not have permission to upload attachments', 403);
     }
 
+    if (!isCloudinaryConfigured()) {
+        throw new AppError('File storage is not configured', 503);
+    }
+
+    const uploaded = await uploadBuffer(file.buffer);
+
     const [attachment] = await db
         .insert(attachments)
         .values({
             taskId,
             fileName: file.originalname,
-            fileUrl: file.path,
+            fileUrl: uploaded.url,
             fileType: file.mimetype,
             fileSize: file.size,
-            cloudinaryId: (file as any).cloudinaryId,
+            cloudinaryId: uploaded.publicId,
             uploadedBy: userId,
         })
         .returning();
@@ -99,7 +107,14 @@ export const deleteAttachment = async (attachmentId: string, userId: string) => 
         throw new AppError('You do not have permission to delete this attachment', 403);
     }
 
-    // TODO: Delete from Cloudinary
-
     await db.delete(attachments).where(eq(attachments.id, attachmentId));
+
+    if (attachment.cloudinaryId && isCloudinaryConfigured()) {
+        try {
+            await deleteRemoteFile(attachment.cloudinaryId);
+        } catch (error) {
+            // The record is already gone; a leftover remote file is not worth failing the request.
+            logger.error('Failed to delete remote attachment', { publicId: attachment.cloudinaryId, error });
+        }
+    }
 };

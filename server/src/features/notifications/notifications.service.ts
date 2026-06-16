@@ -61,7 +61,7 @@ export const createNotification = async (data: {
     title: string;
     message: string;
     link?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }) => {
     const [notification] = await db
         .insert(notifications)
