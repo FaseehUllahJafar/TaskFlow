@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { createProjectSchema, updateProjectSchema } from './projects.schema';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
     createProject,
@@ -51,6 +53,7 @@ router.get(
 // Create project
 router.post(
     '/workspaces/:workspaceId',
+    validateBody(createProjectSchema),
     param('workspaceId').isUUID(),
     body('name').trim().isLength({ min: 2 }),
     body('color').optional().isHexColor(),
@@ -82,6 +85,7 @@ router.get(
 // Update project
 router.patch(
     '/:id',
+    validateBody(updateProjectSchema),
     param('id').isUUID(),
     body('name').optional().trim().isLength({ min: 2 }),
     body('color').optional().isHexColor(),

@@ -1,6 +1,7 @@
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { comments, tasks, taskAssignees, activityLogs } from '../../db/schema';
+import { publicUserColumns } from '../../db/publicColumns';
 import { createNotification } from '../notifications/notifications.service';
 import { broadcastToTask } from '../../socket/realtime';
 import AppError from '../../utils/AppError';
@@ -103,10 +104,10 @@ export const getComments = async (taskId: string, userId: string) => {
         ),
         orderBy: (comments, { asc }) => [asc(comments.createdAt)],
         with: {
-            user: true,
+            user: { columns: publicUserColumns },
             replies: {
                 with: {
-                    user: true,
+                    user: { columns: publicUserColumns },
                 },
                 orderBy: (comments, { asc }) => [asc(comments.createdAt)],
             },

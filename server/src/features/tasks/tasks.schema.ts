@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
+// Accepts a full ISO timestamp or a plain calendar date from an <input type="date">.
+const dateInput = z.union([z.iso.datetime(), z.iso.date()]);
+
 export const createTaskSchema = z.object({
     title: z.string().min(1, 'Title is required'),
     description: z.string().optional(),
     priority: z.enum(['none', 'low', 'medium', 'high', 'urgent']).optional(),
-    dueDate: z.string().datetime().optional(),
+    dueDate: dateInput.optional(),
     assigneeIds: z.array(z.string().uuid()).optional(),
     labelIds: z.array(z.string().uuid()).optional(),
 });
@@ -13,8 +16,8 @@ export const updateTaskSchema = z.object({
     title: z.string().min(1, 'Title is required').optional(),
     description: z.string().optional(),
     priority: z.enum(['none', 'low', 'medium', 'high', 'urgent']).optional(),
-    dueDate: z.string().datetime().optional().nullable(),
-    completedAt: z.string().datetime().optional().nullable(),
+    dueDate: dateInput.optional().nullable(),
+    completedAt: dateInput.optional().nullable(),
     coverImageUrl: z.string().url().optional().nullable(),
 });
 

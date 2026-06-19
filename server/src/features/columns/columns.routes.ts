@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { createColumnSchema, updateColumnSchema } from './columns.schema';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { broadcastToProject } from '../../socket/realtime';
 import {
@@ -20,6 +22,7 @@ router.use(authenticate);
 // Create column
 router.post(
     '/projects/:projectId',
+    validateBody(createColumnSchema),
     param('projectId').isUUID(),
     body('name').trim().isLength({ min: 2 }),
     body('color').optional().isHexColor(),
@@ -71,6 +74,7 @@ router.use('/:id', param('id').isUUID(), validate);
 // Update column
 router.patch(
     '/:id',
+    validateBody(updateColumnSchema),
     body('name').optional().trim().isLength({ min: 2 }),
     body('color').optional().isHexColor(),
     validate,

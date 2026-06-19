@@ -5,6 +5,7 @@ import {
     columns,
     workspaceMembers,
 } from '../../db/schema';
+import { publicUserColumns } from '../../db/publicColumns';
 import AppError from '../../utils/AppError';
 import { generateClientToken } from '../../utils/crypto';
 
@@ -78,7 +79,7 @@ export const getWorkspaceProjects = async (workspaceId: string, userId: string) 
         ),
         orderBy: desc(projects.createdAt),
         with: {
-            creator: true,
+            creator: { columns: publicUserColumns },
         },
     });
 
@@ -93,7 +94,7 @@ export const getProjectById = async (projectId: string, userId: string) => {
                 with: {
                     members: {
                         with: {
-                            user: true,
+                            user: { columns: publicUserColumns },
                         },
                     },
                 },
@@ -106,7 +107,7 @@ export const getProjectById = async (projectId: string, userId: string) => {
                         with: {
                             assignees: {
                                 with: {
-                                    user: true,
+                                    user: { columns: publicUserColumns },
                                 },
                             },
                             taskLabels: {
@@ -114,7 +115,7 @@ export const getProjectById = async (projectId: string, userId: string) => {
                                     label: true,
                                 },
                             },
-                            creator: true,
+                            creator: { columns: publicUserColumns },
                         },
                     },
                 },

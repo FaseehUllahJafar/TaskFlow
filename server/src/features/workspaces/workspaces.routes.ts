@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { createWorkspaceSchema, updateWorkspaceSchema, inviteMemberSchema, updateMemberRoleSchema } from './workspaces.schema';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
     createWorkspace,
@@ -24,6 +26,7 @@ router.use(authenticate);
 // Create workspace
 router.post(
     '/',
+    validateBody(createWorkspaceSchema),
     body('name').trim().isLength({ min: 2 }),
     validate,
     asyncHandler(async (req: AuthRequest, res) => {
@@ -79,6 +82,7 @@ router.get(
 // Update workspace
 router.patch(
     '/:id',
+    validateBody(updateWorkspaceSchema),
     body('name').optional().trim().isLength({ min: 2 }),
     body('logoUrl').optional({ nullable: true }).isURL(),
     validate,
@@ -119,6 +123,7 @@ router.get(
 // Invite member
 router.post(
     '/:id/invite',
+    validateBody(inviteMemberSchema),
     body('email').isEmail().normalizeEmail(),
     body('role').isIn(['admin', 'member', 'client']),
     validate,
@@ -135,6 +140,7 @@ router.post(
 // Update member role
 router.patch(
     '/:id/members/:userId',
+    validateBody(updateMemberRoleSchema),
     param('userId').isUUID(),
     body('role').isIn(['admin', 'member', 'client']),
     validate,

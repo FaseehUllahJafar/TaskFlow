@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { updateProfileSchema } from './auth.schema';
 import { authLimiter } from '../../middleware/rateLimiter';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
@@ -150,6 +152,24 @@ router.get(
     })
 );
 
+// Logout only needs the refresh cookie, so it works even when the access token has expired.
+router.post(
+    '/logout',
+    asyncHandler(async (req, res) => {
+        const refreshTokenCookie = req.cookies.refreshToken;
+
+        if (refreshTokenCookie) {
+            await logout(refreshTokenCookie);
+            res.clearCookie('refreshToken');
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Logout successful',
+        });
+    })
+);
+
 // Protected routes
 router.use(authenticate);
 
@@ -166,6 +186,7 @@ router.get(
 
 router.patch(
     '/profile',
+    validateBody(updateProfileSchema),
     body('fullName').optional().trim().isLength({ min: 2 }),
     body('avatarUrl').optional().isURL(),
     validate,
@@ -204,23 +225,6 @@ router.delete(
         res.status(200).json({
             success: true,
             message: 'Account deleted successfully',
-        });
-    })
-);
-
-router.post(
-    '/logout',
-    asyncHandler(async (req: AuthRequest, res) => {
-        const refreshTokenCookie = req.cookies.refreshToken;
-
-        if (refreshTokenCookie) {
-            await logout(refreshTokenCookie);
-            res.clearCookie('refreshToken');
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Logout successful',
         });
     })
 );

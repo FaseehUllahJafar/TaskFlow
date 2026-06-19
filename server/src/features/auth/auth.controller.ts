@@ -247,7 +247,13 @@ export const updateProfile = async (
         .where(eq(users.id, userId))
         .returning();
 
-    return updatedUser;
+    return {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        avatarUrl: updatedUser.avatarUrl,
+        isVerified: updatedUser.isVerified,
+    };
 };
 
 export const changePassword = async (

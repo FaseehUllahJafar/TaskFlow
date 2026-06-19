@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { createTaskSchema, updateTaskSchema, moveTaskSchema } from './tasks.schema';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { broadcastToProject, broadcastToTask } from '../../socket/realtime';
 import {
@@ -26,6 +28,7 @@ router.use(authenticate);
 // Create task
 router.post(
     '/columns/:columnId',
+    validateBody(createTaskSchema),
     param('columnId').isUUID(),
     body('title').trim().isLength({ min: 1 }),
     body('priority').optional().isIn(['none', 'low', 'medium', 'high', 'urgent']),
@@ -94,6 +97,7 @@ router.get(
 // Update task
 router.patch(
     '/:id',
+    validateBody(updateTaskSchema),
     body('title').optional().trim().isLength({ min: 1 }),
     body('priority').optional().isIn(['none', 'low', 'medium', 'high', 'urgent']),
     validate,
@@ -125,6 +129,7 @@ router.delete(
 // Move task
 router.patch(
     '/:id/move',
+    validateBody(moveTaskSchema),
     body('columnId').isUUID(),
     body('position').isInt(),
     validate,

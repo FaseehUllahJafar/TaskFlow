@@ -6,6 +6,7 @@ import {
     workspaceInvites,
     users,
 } from '../../db/schema';
+import { publicUserColumns } from '../../db/publicColumns';
 import AppError from '../../utils/AppError';
 import { trySendEmail, escapeHtml } from '../../config/nodemailer';
 import { generateSlug, generateRandomToken } from '../../utils/crypto';
@@ -52,7 +53,7 @@ export const getUserWorkspaces = async (userId: string) => {
         with: {
             workspace: {
                 with: {
-                    owner: true,
+                    owner: { columns: publicUserColumns },
                 },
             },
         },
@@ -80,10 +81,10 @@ export const getWorkspaceById = async (workspaceId: string, userId: string) => {
     const workspace = await db.query.workspaces.findFirst({
         where: eq(workspaces.id, workspaceId),
         with: {
-            owner: true,
+            owner: { columns: publicUserColumns },
             members: {
                 with: {
-                    user: true,
+                    user: { columns: publicUserColumns },
                 },
             },
         },
@@ -154,7 +155,7 @@ export const getWorkspaceMembers = async (workspaceId: string, userId: string) =
     const members = await db.query.workspaceMembers.findMany({
         where: eq(workspaceMembers.workspaceId, workspaceId),
         with: {
-            user: true,
+            user: { columns: publicUserColumns },
         },
     });
 

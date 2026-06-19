@@ -1,6 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../config/db';
 import { columns, projects, workspaceMembers } from '../../db/schema';
+import { publicUserColumns } from '../../db/publicColumns';
 import AppError from '../../utils/AppError';
 
 export const createColumn = async (
@@ -80,7 +81,7 @@ export const getProjectColumns = async (projectId: string, userId: string) => {
                 with: {
                     assignees: {
                         with: {
-                            user: true,
+                            user: { columns: publicUserColumns },
                         },
                     },
                     taskLabels: {
@@ -88,7 +89,7 @@ export const getProjectColumns = async (projectId: string, userId: string) => {
                             label: true,
                         },
                     },
-                    creator: true,
+                    creator: { columns: publicUserColumns },
                 },
             },
         },

@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { authenticate, AuthRequest } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { validateBody } from '../../middleware/validateBody';
+import { createCommentSchema, updateCommentSchema } from './comments.schema';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import {
     createComment,
@@ -18,6 +20,7 @@ router.use(authenticate);
 // Create comment
 router.post(
     '/tasks/:taskId',
+    validateBody(createCommentSchema),
     param('taskId').isUUID(),
     body('content').trim().isLength({ min: 1 }),
     body('parentId').optional().isUUID(),
@@ -52,6 +55,7 @@ router.use('/:id', param('id').isUUID(), validate);
 // Update comment
 router.patch(
     '/:id',
+    validateBody(updateCommentSchema),
     body('content').trim().isLength({ min: 1 }),
     validate,
     asyncHandler(async (req: AuthRequest, res) => {

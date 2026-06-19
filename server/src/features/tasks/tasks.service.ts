@@ -9,6 +9,7 @@ import {
     taskLabels,
     activityLogs,
 } from '../../db/schema';
+import { publicUserColumns } from '../../db/publicColumns';
 import AppError from '../../utils/AppError';
 import { getProjectMembership } from '../../utils/membership';
 import { createNotification } from '../notifications/notifications.service';
@@ -172,7 +173,7 @@ export const getTasks = async (
         with: {
             assignees: {
                 with: {
-                    user: true,
+                    user: { columns: publicUserColumns },
                 },
             },
             taskLabels: {
@@ -180,7 +181,7 @@ export const getTasks = async (
                     label: true,
                 },
             },
-            creator: true,
+            creator: { columns: publicUserColumns },
         },
     });
 
@@ -206,7 +207,7 @@ export const getTaskById = async (taskId: string, userId: string) => {
             },
             assignees: {
                 with: {
-                    user: true,
+                    user: { columns: publicUserColumns },
                 },
             },
             taskLabels: {
@@ -217,16 +218,16 @@ export const getTaskById = async (taskId: string, userId: string) => {
             attachments: true,
             comments: {
                 with: {
-                    user: true,
+                    user: { columns: publicUserColumns },
                     replies: {
                         with: {
-                            user: true,
+                            user: { columns: publicUserColumns },
                         },
                     },
                 },
                 orderBy: (comments, { asc }) => [asc(comments.createdAt)],
             },
-            creator: true,
+            creator: { columns: publicUserColumns },
         },
     });
 
