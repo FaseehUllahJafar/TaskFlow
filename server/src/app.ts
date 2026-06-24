@@ -20,6 +20,8 @@ import taskRoutes from './features/tasks/tasks.routes';
 import commentRoutes from './features/comments/comments.routes';
 import attachmentRoutes from './features/attachments/attachments.routes';
 import notificationRoutes from './features/notifications/notifications.routes';
+import dashboardRoutes from './features/dashboard/dashboard.routes';
+import labelRoutes from './features/labels/labels.routes';
 
 const app = express();
 
@@ -67,6 +69,8 @@ api.use('/tasks', taskRoutes);
 api.use('/comments', commentRoutes);
 api.use('/attachments', attachmentRoutes);
 api.use('/notifications', notificationRoutes);
+api.use('/dashboard', dashboardRoutes);
+api.use('/labels', labelRoutes);
 app.use('/api/v1', api);
 
 app.use((_req: Request, _res: Response, next: NextFunction) => {
