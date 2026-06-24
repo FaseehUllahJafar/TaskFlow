@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '../../lib/axios';
+import { disconnectSocket } from '../../lib/socket';
 
 export interface User {
     id: string;
@@ -95,6 +96,8 @@ export const fetchCurrentUser = createAsyncThunk<User, void, { rejectValue: stri
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
+    // Drop the realtime connection too, or the next user in this tab would inherit this one's rooms.
+    disconnectSocket();
     try {
         await axios.post('/auth/logout');
     } catch {
@@ -149,7 +152,8 @@ const authSlice = createSlice({
                 state.isAuthenticated = false;
                 storeToken(null);
             })
-            .addCase(logout.fulfilled, (state) => {
+            // Sign out locally right away; the server call only revokes the refresh token.
+            .addCase(logout.pending, (state) => {
                 state.user = null;
                 state.accessToken = null;
                 state.isAuthenticated = false;
