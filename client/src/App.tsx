@@ -10,6 +10,7 @@ import ForgotPassword from './features/auth/pages/ForgotPassword';
 import ResetPassword from './features/auth/pages/ResetPassword';
 import VerifyEmail from './features/auth/pages/VerifyEmail';
 import AcceptInvitePage from './features/workspaces/pages/AcceptInvitePage';
+import WorkspaceDetailPage from './features/workspaces/pages/WorkspaceDetailPage';
 import AppLayout from './components/layout/AppLayout';
 import WorkspacesPage from './features/workspaces/pages/WorkspacesPage';
 import ProjectBoardPage from './features/board/pages/ProjectBoardPage';
@@ -84,6 +85,7 @@ function App() {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="workspaces" element={<WorkspacesPage />} />
                     <Route path="workspaces/new" element={<WorkspacesPage />} />
+                    <Route path="workspaces/:workspaceId" element={<WorkspaceDetailPage />} />
                     <Route path="accept-invite/:token" element={<AcceptInvitePage />} />
                     <Route path="projects/:projectId" element={<ProjectBoardPage />} />
                 </Route>

@@ -9,6 +9,7 @@ interface BoardColumnProps {
     onTaskClick: (taskId: string) => void;
     onAddTask: (columnId: string) => void;
     onDeleteColumn: (columnId: string) => void;
+    onRenameColumn: (columnId: string, name: string) => void;
 }
 
 const BoardColumn: React.FC<BoardColumnProps> = ({
@@ -16,20 +17,54 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
     onTaskClick,
     onAddTask,
     onDeleteColumn,
+    onRenameColumn,
 }) => {
     const [showMenu, setShowMenu] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [name, setName] = useState(column.name);
+
+    const saveName = () => {
+        const trimmed = name.trim();
+        if (trimmed.length >= 2 && trimmed !== column.name) {
+            onRenameColumn(column.id, trimmed);
+        } else {
+            setName(column.name);
+        }
+        setIsRenaming(false);
+    };
 
     return (
         <div className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-3">
             <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900">{column.name}</h3>
-                    <span className="text-xs text-gray-500">({column.tasks.length})</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {isRenaming ? (
+                        <input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            onBlur={saveName}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveName();
+                                if (e.key === 'Escape') {
+                                    setName(column.name);
+                                    setIsRenaming(false);
+                                }
+                            }}
+                            className="input-base py-1"
+                            aria-label="Column name"
+                            autoFocus
+                        />
+                    ) : (
+                        <>
+                            <h3 className="font-semibold text-gray-900 truncate">{column.name}</h3>
+                            <span className="text-xs text-gray-500">({column.tasks.length})</span>
+                        </>
+                    )}
                 </div>
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
                         className="p-1 hover:bg-gray-200 rounded"
+                        aria-label="Column menu"
                     >
                         <MoreHorizontal className="h-4 w-4 text-gray-500" />
                     </button>
@@ -37,13 +72,14 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 border">
                             <button
                                 onClick={() => {
-                                    // Edit column
+                                    setName(column.name);
+                                    setIsRenaming(true);
                                     setShowMenu(false);
                                 }}
                                 className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
                                 <Edit className="h-4 w-4 mr-2" />
-                                Edit
+                                Rename
                             </button>
                             <button
                                 onClick={() => {
@@ -70,10 +106,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                                 {...provided.dragHandleProps}
                                 className={`${snapshot.isDragging ? 'opacity-50' : ''}`}
                             >
-                                <TaskCard
-                                    task={task}
-                                    onClick={() => onTaskClick(task.id)}
-                                />
+                                <TaskCard task={task} onClick={() => onTaskClick(task.id)} />
                             </div>
                         )}
                     </Draggable>

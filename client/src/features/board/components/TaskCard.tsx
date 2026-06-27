@@ -22,7 +22,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 />
             )}
 
-            <h4 className="font-medium text-gray-900 mb-2">{task.title}</h4>
+            <h4 className={`font-medium mb-2 ${task.completedAt ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                {task.title}
+            </h4>
 
             {task.taskLabels && task.taskLabels.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
@@ -48,8 +50,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
                 {task.dueDate && (
                     <div
-                        className={`flex items-center ${isOverdue(task.dueDate) ? 'text-red-600' : isDueSoon(task.dueDate) ? 'text-orange-600' : ''
-                            }`}
+                        className={`flex items-center ${
+                            task.completedAt ? '' : isOverdue(task.dueDate) ? 'text-red-600' : isDueSoon(task.dueDate) ? 'text-orange-600' : ''
+                        }`}
                     >
                         <Calendar className="h-3 w-3 mr-1" />
                         <span>{formatRelativeTime(task.dueDate)}</span>

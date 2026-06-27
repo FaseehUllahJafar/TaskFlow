@@ -1,29 +1,30 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../../lib/axios';
 
+export interface PublicUser {
+    id: string;
+    fullName: string;
+    avatarUrl?: string | null;
+    email: string;
+}
+
 export interface TaskDetail {
     id: string;
     columnId: string;
     projectId: string;
     title: string;
-    description?: string;
+    description?: string | null;
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     position: number;
-    dueDate?: string;
-    completedAt?: string;
-    coverImageUrl?: string;
-    createdBy: {
-        id: string;
-        fullName: string;
-        avatarUrl?: string;
-        email: string;
-    };
+    dueDate?: string | null;
+    completedAt?: string | null;
+    coverImageUrl?: string | null;
+    creator?: PublicUser;
     updatedAt: string;
-    assignees?: Array<{ user: { id: string; fullName: string; avatarUrl?: string; email: string } }>;
+    assignees?: Array<{ user: PublicUser }>;
     taskLabels?: Array<{ label: { id: string; name: string; color: string } }>;
     comments?: Comment[];
     attachments?: Attachment[];
-    activityLog?: ActivityLog[];
 }
 
 export interface Comment {
@@ -31,16 +32,11 @@ export interface Comment {
     taskId: string;
     userId: string;
     content: string;
-    parentId?: string;
+    parentId?: string | null;
     isEdited: boolean;
     createdAt: string;
     updatedAt: string;
-    user: {
-        id: string;
-        fullName: string;
-        avatarUrl?: string;
-        email: string;
-    };
+    user: PublicUser;
     replies?: Comment[];
 }
 
@@ -49,30 +45,9 @@ export interface Attachment {
     taskId: string;
     fileName: string;
     fileUrl: string;
-    fileType: string;
-    fileSize: number;
-    cloudinaryId: string;
-    uploadedBy: {
-        id: string;
-        fullName: string;
-        avatarUrl?: string;
-    };
+    fileType?: string | null;
+    fileSize?: number | null;
     createdAt: string;
-}
-
-export interface ActivityLog {
-    id: string;
-    projectId: string;
-    taskId: string;
-    userId: string;
-    action: string;
-    metadata: Record<string, unknown>;
-    createdAt: string;
-    user: {
-        id: string;
-        fullName: string;
-        avatarUrl?: string;
-    };
 }
 
 export interface TaskState {
@@ -91,116 +66,105 @@ const initialState: TaskState = {
     error: null,
 };
 
-// Async thunks for API calls
-export const getTaskById = createAsyncThunk(
-    'task/getTaskById',
-    async (taskId: string) => {
-        const response = await axios.get(`/tasks/${taskId}`);
-        return response.data.data;
-    }
-);
+export const getTaskById = createAsyncThunk('task/getTaskById', async (taskId: string) => {
+    const response = await axios.get(`/tasks/${taskId}`);
+    return response.data.data as TaskDetail;
+});
 
+// Every mutation reloads the task afterwards: the mutation endpoints return the bare row,
+// while the modal needs the joined view (assignees, labels, comments, attachments).
 export const updateTask = createAsyncThunk(
     'task/updateTask',
-    async (data: { taskId: string; title?: string; description?: string; priority?: string; dueDate?: string }) => {
-        const response = await axios.patch(`/tasks/${data.taskId}`, data);
-        return response.data.data;
+    async (
+        data: {
+            taskId: string;
+            title?: string;
+            description?: string;
+            priority?: TaskDetail['priority'];
+            dueDate?: string | null;
+            completedAt?: string | null;
+        },
+        { dispatch }
+    ) => {
+        const { taskId, ...changes } = data;
+        await axios.patch(`/tasks/${taskId}`, changes);
+        await dispatch(getTaskById(taskId));
     }
 );
 
-export const deleteTask = createAsyncThunk(
-    'task/deleteTask',
-    async (taskId: string) => {
-        await axios.delete(`/tasks/${taskId}`);
-        return taskId;
-    }
-);
+export const deleteTask = createAsyncThunk('task/deleteTask', async (taskId: string) => {
+    await axios.delete(`/tasks/${taskId}`);
+    return taskId;
+});
 
 export const addComment = createAsyncThunk(
     'task/addComment',
-    async (data: { taskId: string; content: string; parentId?: string }) => {
-        const response = await axios.post(`/comments/tasks/${data.taskId}`, {
+    async (data: { taskId: string; content: string; parentId?: string }, { dispatch }) => {
+        await axios.post(`/comments/tasks/${data.taskId}`, {
             content: data.content,
             parentId: data.parentId,
         });
-        return response.data.data;
-    }
-);
-
-export const updateComment = createAsyncThunk(
-    'task/updateComment',
-    async (data: { taskId: string; commentId: string; content: string }) => {
-        const response = await axios.patch(`/comments/${data.commentId}`, {
-            content: data.content,
-        });
-        return response.data.data;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const deleteComment = createAsyncThunk(
     'task/deleteComment',
-    async (data: { taskId: string; commentId: string }) => {
+    async (data: { taskId: string; commentId: string }, { dispatch }) => {
         await axios.delete(`/comments/${data.commentId}`);
-        return data.commentId;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const uploadAttachment = createAsyncThunk(
     'task/uploadAttachment',
-    async (data: { taskId: string; file: File }) => {
+    async (data: { taskId: string; file: File }, { dispatch }) => {
         const formData = new FormData();
         formData.append('file', data.file);
-
-        const response = await axios.post(`/attachments/tasks/${data.taskId}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
+        await axios.post(`/attachments/tasks/${data.taskId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
         });
-        return response.data.data;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const deleteAttachment = createAsyncThunk(
     'task/deleteAttachment',
-    async (data: { taskId: string; attachmentId: string }) => {
+    async (data: { taskId: string; attachmentId: string }, { dispatch }) => {
         await axios.delete(`/attachments/${data.attachmentId}`);
-        return data.attachmentId;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const addAssignee = createAsyncThunk(
     'task/addAssignee',
-    async (data: { taskId: string; userId: string }) => {
-        const response = await axios.post(`/tasks/${data.taskId}/assignees`, {
-            userId: data.userId,
-        });
-        return response.data.data;
+    async (data: { taskId: string; userId: string }, { dispatch }) => {
+        await axios.post(`/tasks/${data.taskId}/assignees`, { userIds: [data.userId] });
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const removeAssignee = createAsyncThunk(
     'task/removeAssignee',
-    async (data: { taskId: string; userId: string }) => {
+    async (data: { taskId: string; userId: string }, { dispatch }) => {
         await axios.delete(`/tasks/${data.taskId}/assignees/${data.userId}`);
-        return data.userId;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const addLabel = createAsyncThunk(
     'task/addLabel',
-    async (data: { taskId: string; labelId: string }) => {
-        const response = await axios.post(`/tasks/${data.taskId}/labels`, {
-            labelId: data.labelId,
-        });
-        return response.data.data;
+    async (data: { taskId: string; labelId: string }, { dispatch }) => {
+        await axios.post(`/tasks/${data.taskId}/labels`, { labelIds: [data.labelId] });
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
 export const removeLabel = createAsyncThunk(
     'task/removeLabel',
-    async (data: { taskId: string; labelId: string }) => {
+    async (data: { taskId: string; labelId: string }, { dispatch }) => {
         await axios.delete(`/tasks/${data.taskId}/labels/${data.labelId}`);
-        return data.labelId;
+        await dispatch(getTaskById(data.taskId));
     }
 );
 
@@ -208,31 +172,15 @@ const taskSlice = createSlice({
     name: 'task',
     initialState,
     reducers: {
-        // Optimistic update from Socket.io
-        commentAddedOptimistic: (state, action: { payload: Comment }) => {
-            if (state.currentTask && state.currentTask.comments) {
-                state.currentTask.comments.push(action.payload);
-            }
-        },
-        attachmentAddedOptimistic: (state, action: { payload: Attachment }) => {
-            if (state.currentTask && state.currentTask.attachments) {
-                state.currentTask.attachments.push(action.payload);
-            }
-        },
-        taskUpdatedOptimistic: (state, action: { payload: Partial<TaskDetail> }) => {
-            if (state.currentTask) {
-                state.currentTask = { ...state.currentTask, ...action.payload };
-            }
-        },
         clearCurrentTask: (state) => {
             state.currentTask = null;
         },
     },
     extraReducers: (builder) => {
         builder
-            // Get Task
-            .addCase(getTaskById.pending, (state) => {
-                state.isLoading = true;
+            .addCase(getTaskById.pending, (state, action) => {
+                // Only show the loading state when opening a different task; background refreshes are silent.
+                state.isLoading = state.currentTask?.id !== action.meta.arg;
                 state.error = null;
             })
             .addCase(getTaskById.fulfilled, (state, action) => {
@@ -243,89 +191,31 @@ const taskSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.error.message || 'Failed to load task';
             })
-            // Update Task
             .addCase(updateTask.pending, (state) => {
                 state.isUpdating = true;
             })
-            .addCase(updateTask.fulfilled, (state, action) => {
+            .addCase(updateTask.fulfilled, (state) => {
                 state.isUpdating = false;
-                state.currentTask = action.payload;
             })
             .addCase(updateTask.rejected, (state, action) => {
                 state.isUpdating = false;
                 state.error = action.error.message || 'Failed to update task';
             })
-            // Delete Task
             .addCase(deleteTask.fulfilled, (state) => {
                 state.currentTask = null;
             })
-            // Add Comment
             .addCase(addComment.pending, (state) => {
                 state.isSavingComment = true;
             })
-            .addCase(addComment.fulfilled, (state, action) => {
+            .addCase(addComment.fulfilled, (state) => {
                 state.isSavingComment = false;
-                if (state.currentTask && state.currentTask.comments) {
-                    state.currentTask.comments.push(action.payload);
-                }
             })
             .addCase(addComment.rejected, (state, action) => {
                 state.isSavingComment = false;
                 state.error = action.error.message || 'Failed to add comment';
-            })
-            // Update Comment
-            .addCase(updateComment.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.comments) {
-                    const index = state.currentTask.comments.findIndex(c => c.id === action.payload.id);
-                    if (index !== -1) {
-                        state.currentTask.comments[index] = action.payload;
-                    }
-                }
-            })
-            // Delete Comment
-            .addCase(deleteComment.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.comments) {
-                    state.currentTask.comments = state.currentTask.comments.filter(c => c.id !== action.payload);
-                }
-            })
-            // Upload Attachment
-            .addCase(uploadAttachment.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.attachments) {
-                    state.currentTask.attachments.push(action.payload);
-                }
-            })
-            // Delete Attachment
-            .addCase(deleteAttachment.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.attachments) {
-                    state.currentTask.attachments = state.currentTask.attachments.filter(a => a.id !== action.payload);
-                }
-            })
-            // Add Assignee
-            .addCase(addAssignee.fulfilled, (state, action) => {
-                if (state.currentTask) {
-                    state.currentTask = action.payload;
-                }
-            })
-            // Remove Assignee
-            .addCase(removeAssignee.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.assignees) {
-                    state.currentTask.assignees = state.currentTask.assignees.filter(a => a.user.id !== action.payload);
-                }
-            })
-            // Add Label
-            .addCase(addLabel.fulfilled, (state, action) => {
-                if (state.currentTask) {
-                    state.currentTask = action.payload;
-                }
-            })
-            // Remove Label
-            .addCase(removeLabel.fulfilled, (state, action) => {
-                if (state.currentTask && state.currentTask.taskLabels) {
-                    state.currentTask.taskLabels = state.currentTask.taskLabels.filter(l => l.label.id !== action.payload);
-                }
             });
     },
 });
 
-export const { commentAddedOptimistic, attachmentAddedOptimistic, taskUpdatedOptimistic, clearCurrentTask } = taskSlice.actions;
+export const { clearCurrentTask } = taskSlice.actions;
 export default taskSlice.reducer;

@@ -9,6 +9,11 @@ export interface Workspace {
     logoUrl?: string;
     ownerId: string;
     memberRole: 'admin' | 'member' | 'client';
+    members?: Array<{
+        id: string;
+        role: 'admin' | 'member' | 'client';
+        user: { id: string; fullName: string; email: string; avatarUrl?: string | null };
+    }>;
 }
 
 export interface WorkspaceState {

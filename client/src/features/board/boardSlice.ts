@@ -120,8 +120,10 @@ const boardSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(getBoardColumns.pending, (state) => {
-                state.isLoading = true;
+            .addCase(getBoardColumns.pending, (state, action) => {
+                // Show the spinner only for a first load; background refreshes keep the board on screen.
+                const sameProject = state.columns.length > 0 && state.columns[0].projectId === action.meta.arg;
+                state.isLoading = !sameProject;
                 state.error = null;
             })
             .addCase(getBoardColumns.fulfilled, (state, action) => {
@@ -133,12 +135,13 @@ const boardSlice = createSlice({
                 state.error = action.error.message || 'Failed to load board';
             })
             .addCase(createColumn.fulfilled, (state, action) => {
-                state.columns.push(action.payload);
+                state.columns.push({ ...action.payload, tasks: [] });
             })
             .addCase(updateColumn.fulfilled, (state, action) => {
                 const index = state.columns.findIndex(c => c.id === action.payload.id);
                 if (index !== -1) {
-                    state.columns[index] = action.payload;
+                    // The endpoint returns the bare column; keep the tasks we already have.
+                    state.columns[index] = { ...state.columns[index], ...action.payload };
                 }
             })
             .addCase(deleteColumn.fulfilled, (state, action) => {

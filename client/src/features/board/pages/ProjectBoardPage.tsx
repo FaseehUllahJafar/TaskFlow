@@ -2,44 +2,57 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useAppDispatch, useAppSelector, useSocketBoard } from '../../../hooks';
-import { getBoardColumns, createColumn, deleteColumn, moveTask, updateTaskOptimistic } from '../boardSlice';
+import {
+    getBoardColumns,
+    createColumn,
+    updateColumn,
+    deleteColumn,
+    moveTask,
+    updateTaskOptimistic,
+} from '../boardSlice';
 import { getProjectById } from '../../projects/projectsSlice';
 import BoardColumn from '../components/BoardColumn';
+import CreateTaskModal from '../components/CreateTaskModal';
+import ClientLinkModal from '../components/ClientLinkModal';
 import TaskDetailModal from '../../tasks/components/TaskDetailModal';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft, Link2 } from 'lucide-react';
 
 const ProjectBoardPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const { columns, isLoading } = useAppSelector((state) => state.board);
+    const { columns, isLoading, error } = useAppSelector((state) => state.board);
     const { currentProject } = useAppSelector((state) => state.projects);
     const [showAddColumn, setShowAddColumn] = useState(false);
     const [newColumnName, setNewColumnName] = useState('');
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [addTaskColumnId, setAddTaskColumnId] = useState<string | null>(null);
+    const [showClientLink, setShowClientLink] = useState(false);
 
     // Set up Socket.io listeners for real-time board updates
     useSocketBoard(projectId);
 
     useEffect(() => {
         if (projectId) {
-            dispatch(getBoardColumns(projectId));
-            dispatch(getProjectById(projectId));
+            void dispatch(getBoardColumns(projectId));
+            void dispatch(getProjectById(projectId));
         }
     }, [dispatch, projectId]);
 
-    const handleAddTask = (columnId: string) => {
-        // TODO: Open task creation modal
-        console.log('Add task to column:', columnId);
+    const project = currentProject?.id === projectId ? currentProject : null;
+    const refreshBoard = () => {
+        if (projectId) void dispatch(getBoardColumns(projectId));
     };
 
     const handleDeleteColumn = async (columnId: string) => {
-        if (confirm('Are you sure you want to delete this column?')) {
+        if (confirm('Are you sure you want to delete this column? Its tasks will be deleted too.')) {
             await dispatch(deleteColumn(columnId));
-            if (projectId) {
-                dispatch(getBoardColumns(projectId));
-            }
+            refreshBoard();
         }
+    };
+
+    const handleRenameColumn = async (columnId: string, name: string) => {
+        await dispatch(updateColumn({ columnId, name }));
     };
 
     const handleDragEnd = async (result: DropResult) => {
@@ -51,31 +64,31 @@ const ProjectBoardPage: React.FC = () => {
         }
 
         // Optimistic update to UI
-        dispatch(updateTaskOptimistic({
-            taskId: draggableId,
-            sourceColumnId: source.droppableId,
-            destColumnId: destination.droppableId,
-            newIndex: destination.index,
-        }));
+        dispatch(
+            updateTaskOptimistic({
+                taskId: draggableId,
+                sourceColumnId: source.droppableId,
+                destColumnId: destination.droppableId,
+                newIndex: destination.index,
+            })
+        );
 
-        // Send to backend
-        try {
-            await dispatch(moveTask({
+        // Send to backend; if it fails, reload the real order
+        const response = await dispatch(
+            moveTask({
                 taskId: draggableId,
                 destColumnId: destination.droppableId,
                 position: destination.index,
-            }));
-        } catch (error) {
-            // On error, refresh the board
-            if (projectId) {
-                dispatch(getBoardColumns(projectId));
-            }
+            })
+        );
+        if (moveTask.rejected.match(response)) {
+            refreshBoard();
         }
     };
 
     const handleCreateColumn = async () => {
-        if (newColumnName.trim() && projectId) {
-            await dispatch(createColumn({ projectId, name: newColumnName }));
+        if (newColumnName.trim().length >= 2 && projectId) {
+            await dispatch(createColumn({ projectId, name: newColumnName.trim() }));
             setNewColumnName('');
             setShowAddColumn(false);
         }
@@ -89,25 +102,37 @@ const ProjectBoardPage: React.FC = () => {
         );
     }
 
+    if (error && columns.length === 0) {
+        return (
+            <div className="text-center py-16 space-y-3">
+                <p className="text-gray-600">{error}</p>
+                <button onClick={() => navigate('/workspaces')} className="text-primary-600 hover:text-primary-700">
+                    Back to workspaces
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/workspaces')}
+                        onClick={() => navigate(project ? `/workspaces/${project.workspaceId}` : '/workspaces')}
                         className="p-2 hover:bg-gray-100 rounded-lg"
+                        aria-label="Back"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            {currentProject?.name || 'Project Board'}
-                        </h1>
-                        {currentProject?.description && (
-                            <p className="text-sm text-gray-500 mt-1">{currentProject.description}</p>
-                        )}
+                        <h1 className="text-2xl font-bold text-gray-900">{project?.name || 'Project Board'}</h1>
+                        {project?.description && <p className="text-sm text-gray-500 mt-1">{project.description}</p>}
                     </div>
                 </div>
+                <button onClick={() => setShowClientLink(true)} className="btn-secondary flex items-center">
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Client link
+                </button>
             </div>
 
             <DragDropContext onDragEnd={handleDragEnd}>
@@ -124,8 +149,9 @@ const ProjectBoardPage: React.FC = () => {
                                         <BoardColumn
                                             column={column}
                                             onTaskClick={(taskId) => setSelectedTaskId(taskId)}
-                                            onAddTask={handleAddTask}
+                                            onAddTask={(columnId) => setAddTaskColumnId(columnId)}
                                             onDeleteColumn={handleDeleteColumn}
+                                            onRenameColumn={handleRenameColumn}
                                         />
                                         {provided.placeholder}
                                     </div>
@@ -152,10 +178,7 @@ const ProjectBoardPage: React.FC = () => {
                                         <button onClick={handleCreateColumn} className="btn-primary text-sm">
                                             Add Column
                                         </button>
-                                        <button
-                                            onClick={() => setShowAddColumn(false)}
-                                            className="btn-secondary text-sm"
-                                        >
+                                        <button onClick={() => setShowAddColumn(false)} className="btn-secondary text-sm">
                                             Cancel
                                         </button>
                                     </div>
@@ -174,11 +197,30 @@ const ProjectBoardPage: React.FC = () => {
                 </div>
             </DragDropContext>
 
-            {/* Task Detail Modal */}
+            {projectId && (
+                <CreateTaskModal
+                    projectId={projectId}
+                    columnId={addTaskColumnId}
+                    onClose={() => setAddTaskColumnId(null)}
+                />
+            )}
+
+            {projectId && (
+                <ClientLinkModal
+                    projectId={projectId}
+                    isOpen={showClientLink}
+                    onClose={() => setShowClientLink(false)}
+                />
+            )}
+
             <TaskDetailModal
                 taskId={selectedTaskId || ''}
                 isOpen={!!selectedTaskId}
-                onClose={() => setSelectedTaskId(null)}
+                workspaceId={project?.workspaceId}
+                onClose={() => {
+                    setSelectedTaskId(null);
+                    refreshBoard();
+                }}
             />
         </div>
     );
