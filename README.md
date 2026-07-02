@@ -7,7 +7,8 @@ A multi-tenant project management app with Kanban boards, real-time collaboratio
 - Multi-tenant workspaces with per-workspace roles (admin, member, client) and email invitations
 - Kanban boards with drag and drop of tasks between columns
 - Live board and task updates over Socket.io
-- Tasks with comments, labels, assignees, due dates and attachments (Cloudinary)
+- Tasks with priority, due dates, completion, comments, per-workspace labels, assignees and attachments (Cloudinary)
+- Dashboard with live counts and recent projects across your workspaces
 - In-app notifications, pushed live, for assignments and comments
 - Read-only client portal for sharing project progress without an account
 - Email and password auth with email verification and password reset, plus optional Google sign in
@@ -77,7 +78,8 @@ Server environment variables (`server/.env`, see `server/.env.example`):
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | no | Google sign in is disabled when unset |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | no | Needed for attachments |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | no | Needed for verification, reset and invite emails |
-| `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS` | no | API rate limit, defaults to 100 requests per 15 minutes |
+| `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS` | no | API rate limit per IP, defaults to 1000 requests per 15 minutes |
+| `AUTH_RATE_LIMIT_MAX` | no | Failed login, register and reset attempts per IP per 15 minutes, defaults to 10 |
 | `LOG_LEVEL`, `LOG_TO_FILE` | no | Logs go to stdout. Set `LOG_TO_FILE=true` to also write `logs/` |
 
 The API refuses to start if a required variable is missing or invalid.
@@ -109,7 +111,12 @@ All routes live under `/api/v1` and need a bearer token unless noted.
 | Projects | `/projects/workspaces/:workspaceId`, `/projects/:id`, `/projects/:id/generate-client-link`, `GET /projects/portal/:clientToken` (public) |
 | Board | `/columns/projects/:projectId`, `/columns/:id`, `/tasks/columns/:columnId`, `/tasks/projects/:projectId`, `/tasks/:id`, `/tasks/:id/move` |
 | Task details | `/tasks/:id/assignees`, `/tasks/:id/labels`, `/comments/tasks/:taskId`, `/attachments/tasks/:taskId` |
+| Labels | `GET` and `POST /labels/workspaces/:workspaceId` |
+| Dashboard | `GET /dashboard` |
 | Notifications | `/notifications`, `/notifications/unread-count`, `/notifications/:id/read`, `/notifications/read-all` |
+
+Request bodies are validated against zod schemas and unknown fields are dropped, and user data embedded in
+responses (members, assignees, comment authors) only ever contains `id`, `fullName`, `email` and `avatarUrl`.
 
 Real-time events are published to `project:<id>`, `task:<id>` and `user:<id>` rooms. Sockets authenticate with the access
 token and must be members of the workspace to join a project or task room.
@@ -135,6 +142,8 @@ docker-compose.yml      full stack: postgres, redis, api, web
   secure cookies, so serve it over HTTPS.
 - Keep the client and API on the same site (as the bundled nginx does), because the refresh cookie is `SameSite=Strict`.
 - Set a strong `JWT_ACCESS_SECRET` and change the default database password in `.env`.
+- Attachments need the `CLOUDINARY_*` variables. Without them uploads return 503 and everything else keeps working.
+- Rate limit counters are kept in memory per API instance. If you run several instances, put a shared limit in front (for example at the reverse proxy).
 
 ## License
 
